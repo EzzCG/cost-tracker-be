@@ -18,6 +18,7 @@ import { UpdateUserDto } from 'src/DTOs/user.update.dto';
 import { UserService } from 'src/Services/user/user.service';
 import { User } from 'src/interfaces/user.interface';
 import { Request, Response } from 'express';
+import { JwtAuthGuard } from 'src/Services/auth/jwt-auth.guard';
 
 @Controller('user')
 export class UserController {
@@ -50,16 +51,16 @@ export class UserController {
     }
   }
 
-  //   @UseGuards(JwtAuthGuard)
   @Get()
   async findAll(): Promise<User[]> {
     return this.userService.findAll();
   }
 
-  @Get(':id')
+  // @UseGuards(JwtAuthGuard)
+  @Get('by-id/:id')
   async findOne(@Param('id') id: string): Promise<User> {
     const user = this.userService.findOne(id);
-    if (user!) {
+    if (!user) {
       throw new NotFoundException(
         `User with id '${id}' not found`,
         'USER_NOT_FOUND',
@@ -68,7 +69,7 @@ export class UserController {
     return user;
   }
 
-  @Get(':email')
+  @Get('by-email/:email')
   async findByEmail(@Param('email') email: string): Promise<User> {
     const user = await this.userService.findByEmail(email);
     if (!user) {

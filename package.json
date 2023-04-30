@@ -23,6 +23,7 @@
     "@nestjs/common": "^9.0.0",
     "@nestjs/config": "^2.3.1",
     "@nestjs/core": "^9.0.0",
+    "@nestjs/jwt": "^10.0.3",
     "@nestjs/mapped-types": "^1.2.2",
     "@nestjs/mongoose": "^9.2.2",
     "@nestjs/passport": "^9.0.3",
@@ -34,6 +35,7 @@
     "mapped-types": "^0.0.1",
     "mongoose": "^7.1.0",
     "passport": "^0.6.0",
+    "passport-jwt": "^4.0.1",
     "passport-local": "^1.0.0",
     "reflect-metadata": "^0.1.13",
     "rxjs": "^7.2.0"

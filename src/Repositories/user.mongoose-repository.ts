@@ -42,12 +42,11 @@ export class MongooseUserRepository implements UserRepository {
   }
 
   async findAll(): Promise<User[]> {
-    Logger.log('getUser: ');
-
     return await this.userModel.find().exec();
   }
 
   async findOne(id: string): Promise<User> {
+    Logger.log(`Repo findone(${id})`);
     return await this.userModel.findById(id).exec();
   }
 
