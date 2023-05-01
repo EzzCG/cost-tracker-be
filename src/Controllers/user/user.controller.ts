@@ -13,12 +13,12 @@ import {
   Req,
   HttpStatus,
 } from '@nestjs/common';
-import { CreateUserDto } from 'src/DTOs/user.create.dto';
-import { UpdateUserDto } from 'src/DTOs/user.update.dto';
-import { UserService } from 'src/Services/user/user.service';
-import { User } from 'src/interfaces/user.interface';
+import { CreateUserDto } from './dtos/user.create.dto';
+import { UpdateUserDto } from './dtos/user.update.dto';
+import { UserService } from './services/user.service';
+import { User } from 'src/Controllers/user/interfaces/user.interface';
 import { Request, Response } from 'express';
-import { JwtAuthGuard } from 'src/Services/auth/jwt-auth.guard';
+import { JwtAuthGuard } from 'src/shared/guards/jwt-auth.guard';
 
 @Controller('user')
 export class UserController {
@@ -56,7 +56,7 @@ export class UserController {
     return this.userService.findAll();
   }
 
-  // @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard)
   @Get('by-id/:id')
   async findOne(@Param('id') id: string): Promise<User> {
     const user = this.userService.findOne(id);
@@ -86,11 +86,25 @@ export class UserController {
     @Param('id') id: string,
     @Body() updateUserDto: UpdateUserDto,
   ): Promise<User> {
-    return this.userService.update(id, updateUserDto);
+    const user = await this.userService.update(id, updateUserDto);
+    if (!user) {
+      throw new NotFoundException(
+        `User with email '${id}' not found`,
+        'USER_NOT_FOUND',
+      );
+    }
+    return user;
   }
 
   @Delete(':id')
   async delete(@Param('id') id: string): Promise<User> {
-    return this.userService.delete(id);
+    const user = await this.userService.delete(id);
+    if (!user) {
+      throw new NotFoundException(
+        `User with email '${id}' not found`,
+        'USER_NOT_FOUND',
+      );
+    }
+    return user;
   }
 }
