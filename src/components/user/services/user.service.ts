@@ -1,7 +1,7 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { UpdateUserDto } from '../dtos/user.update.dto';
 import { UserRepositoryToken, UserRepository } from '../repos/user.repository';
-import { User } from 'src/Controllers/user/interfaces/user.interface';
+import { User } from 'src/components/user/interfaces/user.interface';
 
 @Injectable()
 export class UserService {
