@@ -1,3 +1,8 @@
+import { Alert } from 'src/components/alert/schemas/alert.schema.';
+import { Category } from 'src/components/category/schemas/category.schema';
+import { Expense } from 'src/components/expense/schemas/expense.schema';
+import { MonthlyReport } from 'src/components/report/schemas/report.schema';
+
 export interface User {
   id?: string;
   name: string;
@@ -7,4 +12,8 @@ export interface User {
   role?: string;
   createdAt?: Date;
   updatedAt?: Date;
+  // monthlyReports?: MonthlyReport[];
+  // expenses?: Expense[];
+  // categories?: Category[];
+  // alerts?: Alert[];
 }

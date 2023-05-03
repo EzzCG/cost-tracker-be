@@ -1,0 +1,9 @@
+export interface Category {
+  id?: string;
+  name: string;
+  maxValue: number;
+  minValue: number;
+  // expenses?: Expense[];
+  // alerts?: Alert[];
+  // user: User;
+}

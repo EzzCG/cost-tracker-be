@@ -17,6 +17,18 @@ export class User extends Document {
 
   @Prop({ required: true, default: 'user' })
   role: string;
+
+  // @Prop({ type: [{ type: Schema.Types.ObjectId, ref: 'MonthlyReport' }] })
+  // monthlyReports: MonthlyReport[];
+
+  // @Prop({ type: [{ type: Schema.Types.ObjectId, ref: 'Expense' }] })
+  // expenses: Expense[];
+
+  // @Prop({ type: [{ type: Schema.Types.ObjectId, ref: 'Category' }] })
+  // categories: Category[];
+
+  // @Prop({ type: [{ type: Schema.Types.ObjectId, ref: 'Alert' }] })
+  // alerts: Alert[];
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

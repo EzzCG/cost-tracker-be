@@ -2,21 +2,18 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
 
 @Schema()
-export class Category extends Document {
+export class MonthlyReport extends Document {
   @Prop({ required: true })
-  name: string;
+  totExpenses: number;
 
   @Prop({ required: true })
-  maxValue: number;
+  totIncome: number;
 
   @Prop({ required: true })
-  minValue: number;
+  netBalance: number;
 
   //   @Prop({ type: [{ type: Schema.Types.ObjectId, ref: 'Expense' }] })
   //   expenses: string[];
-
-  //   @Prop({ type: [{ type: Schema.Types.ObjectId, ref: 'Alert' }] })
-  //   alerts: string[];
 }
 
-export const CategorySchema = SchemaFactory.createForClass(Category);
+export const MonthlyReportSchema = SchemaFactory.createForClass(MonthlyReport);
