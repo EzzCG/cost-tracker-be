@@ -26,37 +26,21 @@ export class MongooseUserRepository implements UserRepository {
   constructor(@InjectModel('User') private readonly userModel: Model<User>) {}
 
   async create(user: CreateUserDto): Promise<User> {
-    Logger.log('Entering MongooseUserRepository.create() with user:', user);
+    // Logger.log('Entering MongooseUserRepository.create() with user:', user);
     await checkEmailExists(user.email, this.userModel);
 
     const hashedPassword = await hashPw(user.password);
-
     const createdUser = new this.userModel({
       ...user,
       password: hashedPassword,
     });
-    Logger.log('createdUser:', createdUser);
+    // Logger.log('createdUser:', createdUser);
 
     try {
       const savedUser = await createdUser.save();
-      Logger.log(
-        'Exiting MongooseUserRepository.create() with savedUser:',
-        savedUser,
-      );
       return savedUser;
     } catch (error) {
       return error;
-      // if (
-      //   error.code === 11000 &&
-      //   error.keyPattern &&
-      //   error.keyPattern.email === 1
-      // ) {
-      //   // Duplicate email error
-      //   throw new ConflictException('Email already exists.');
-      // } else {
-      //   // Other errors
-      //   throw new InternalServerErrorException('Internal server error');
-      // }
     }
   }
 
@@ -86,7 +70,6 @@ export class MongooseUserRepository implements UserRepository {
     }
 
     let updatedUser: any = { ...userNew };
-
     if (userNew.password) {
       updatedUser.password = await hashPw(userNew.password);
     }
@@ -94,7 +77,6 @@ export class MongooseUserRepository implements UserRepository {
     const user = await this.userModel
       .findByIdAndUpdate(id, updatedUser, { new: true })
       .exec();
-
     await checkUserFound(user, id);
 
     return user;
