@@ -2,6 +2,8 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { UpdateUserDto } from '../dtos/user.update.dto';
 import { UserRepositoryToken, UserRepository } from '../repos/user.repository';
 import { User } from 'src/components/user/interfaces/user.interface';
+import { Types } from 'mongoose';
+import { Category } from 'src/components/category/schemas/category.schema';
 
 @Injectable()
 export class UserService {
@@ -32,5 +34,18 @@ export class UserService {
 
   async delete(id: string): Promise<User> {
     return await this.userRepository.delete(id);
+  }
+
+  //after creating new category, we add the id to the user
+  async addCategoryToUser(
+    userId: string,
+    categoryId: Types.ObjectId,
+  ): Promise<void> {
+    await this.userRepository.addCategoryToUser(userId, categoryId);
+  }
+
+  //fetch categories for a user
+  async findCategoriesForUser(userId: string): Promise<Category[]> {
+    return await this.userRepository.findCategoriesForUser(userId);
   }
 }

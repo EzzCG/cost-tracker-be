@@ -5,5 +5,5 @@ export interface Category {
   minValue: number;
   // expenses?: Expense[];
   // alerts?: Alert[];
-  // user: User;
+  userId: string;
 }

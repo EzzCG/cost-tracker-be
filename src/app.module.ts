@@ -5,10 +5,18 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { UserModule } from './components/user/user.module';
 import { AuthModule } from './components/auth/auth.module';
+import { CategoryModule } from './components/category/category.module';
+import { ReportModule } from './components/report/report.module';
+import { ExpenseModule } from './components/expense/expense.module';
+import { AlertModule } from './components/alert/alert.module';
 @Module({
   imports: [
     UserModule,
     AuthModule,
+    CategoryModule,
+    ReportModule,
+    ExpenseModule,
+    AlertModule,
     ConfigModule.forRoot(),
     MongooseModule.forRootAsync({
       imports: [ConfigModule],

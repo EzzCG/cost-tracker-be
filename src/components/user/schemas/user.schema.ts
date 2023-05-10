@@ -1,5 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
+import mongoose, { Document, SchemaTypes, Types } from 'mongoose';
+import { Category } from 'src/components/category/schemas/category.schema';
 
 @Schema()
 export class User extends Document {
@@ -24,8 +25,8 @@ export class User extends Document {
   // @Prop({ type: [{ type: Schema.Types.ObjectId, ref: 'Expense' }] })
   // expenses: Expense[];
 
-  // @Prop({ type: [{ type: Schema.Types.ObjectId, ref: 'Category' }] })
-  // categories: Category[];
+  @Prop({ type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Category' }] })
+  categories: Category[];
 
   // @Prop({ type: [{ type: Schema.Types.ObjectId, ref: 'Alert' }] })
   // alerts: Alert[];

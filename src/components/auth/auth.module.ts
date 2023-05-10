@@ -1,4 +1,9 @@
-import { Module } from '@nestjs/common';
+import {
+  MiddlewareConsumer,
+  Module,
+  NestModule,
+  RequestMethod,
+} from '@nestjs/common';
 import { AuthController } from 'src/components/auth/auth.controller';
 import { AuthService } from 'src/components/auth/services/auth.service';
 import { UserModule } from '../user/user.module';
@@ -7,7 +12,8 @@ import { PassportModule } from '@nestjs/passport';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtStrategy } from './services/jwt.strategy';
-
+import { CategoryController } from '../category/category.controller';
+import { AuthMiddleware } from './middleware/auth.middleware';
 @Module({
   imports: [
     UserModule,
@@ -26,4 +32,12 @@ import { JwtStrategy } from './services/jwt.strategy';
   providers: [AuthService, LocalStrategy, JwtStrategy],
   exports: [AuthService],
 })
-export class AuthModule {}
+export class AuthModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    //DONT FORGET TO APPLY TOKEN TO ALL ENDPOINTS
+    consumer.apply(AuthMiddleware).forRoutes(CategoryController, {
+      path: 'user/:id/categories',
+      method: RequestMethod.ALL,
+    });
+  }
+}

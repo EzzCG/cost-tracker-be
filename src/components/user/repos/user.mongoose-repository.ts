@@ -20,6 +20,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { CreateUserDto } from '../dtos/user.create.dto';
 import * as bcrypt from 'bcrypt';
+import { Category } from 'src/components/category/schemas/category.schema';
 
 @Injectable()
 export class MongooseUserRepository implements UserRepository {
@@ -88,5 +89,22 @@ export class MongooseUserRepository implements UserRepository {
     const user = await this.userModel.findByIdAndRemove(id).exec();
     await checkUserFound(user, id);
     return user;
+  }
+
+  async addCategoryToUser(
+    userId: string,
+    categoryId: Types.ObjectId,
+  ): Promise<void> {
+    await this.userModel
+      .findByIdAndUpdate(userId, { $push: { categories: categoryId } })
+      .exec();
+  }
+
+  async findCategoriesForUser(userId: string): Promise<Category[]> {
+    const user = await this.userModel
+      .findById(userId)
+      .populate('categories')
+      .exec();
+    return user.categories;
   }
 }
