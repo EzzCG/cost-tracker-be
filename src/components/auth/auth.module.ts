@@ -14,6 +14,8 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtStrategy } from './services/jwt.strategy';
 import { CategoryController } from '../category/category.controller';
 import { AuthMiddleware } from './middleware/auth.middleware';
+import { AlertController } from '../alert/alert.controller';
+import { ExpenseController } from '../expense/expense.controller';
 @Module({
   imports: [
     UserModule,
@@ -35,9 +37,22 @@ import { AuthMiddleware } from './middleware/auth.middleware';
 export class AuthModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
     //DONT FORGET TO APPLY TOKEN TO ALL ENDPOINTS
-    consumer.apply(AuthMiddleware).forRoutes(CategoryController, {
-      path: 'user/:id/categories',
-      method: RequestMethod.ALL,
-    });
+    consumer.apply(AuthMiddleware).forRoutes(
+      CategoryController,
+      AlertController,
+      ExpenseController,
+      {
+        path: 'user/:id/categories',
+        method: RequestMethod.ALL,
+      },
+      {
+        path: 'user/:id/expenses',
+        method: RequestMethod.ALL,
+      },
+      {
+        path: 'user/:id/alerts',
+        method: RequestMethod.ALL,
+      },
+    );
   }
 }

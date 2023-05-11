@@ -12,6 +12,8 @@ export class Expense extends Document {
   @Prop({ required: true })
   date: string;
 
+  @Prop({ required: true })
+  userId: string;
   //   @Prop({ type: Schema.Types.ObjectId, ref: 'Category' })
   //   category: string;
 

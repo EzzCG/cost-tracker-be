@@ -21,6 +21,8 @@ import { Model, Types } from 'mongoose';
 import { CreateUserDto } from '../dtos/user.create.dto';
 import * as bcrypt from 'bcrypt';
 import { Category } from 'src/components/category/schemas/category.schema';
+import { Expense } from 'src/components/expense/schemas/expense.schema';
+import { Alert } from 'src/components/alert/schemas/alert.schema.';
 
 @Injectable()
 export class MongooseUserRepository implements UserRepository {
@@ -100,11 +102,42 @@ export class MongooseUserRepository implements UserRepository {
       .exec();
   }
 
+  async addExpenseToUser(
+    userId: string,
+    expenseId: Types.ObjectId,
+  ): Promise<void> {
+    await this.userModel
+      .findByIdAndUpdate(userId, { $push: { expenses: expenseId } })
+      .exec();
+  }
+
+  async addAlertToUser(userId: string, alertId: Types.ObjectId): Promise<void> {
+    await this.userModel
+      .findByIdAndUpdate(userId, { $push: { alerts: alertId } })
+      .exec();
+  }
+
   async findCategoriesForUser(userId: string): Promise<Category[]> {
     const user = await this.userModel
       .findById(userId)
       .populate('categories')
       .exec();
     return user.categories;
+  }
+
+  async findExpensesForUser(userId: string): Promise<Expense[]> {
+    const user = await this.userModel
+      .findById(userId)
+      .populate('expenses')
+      .exec();
+    return user.expenses;
+  }
+
+  async findAlertsForUser(userId: string): Promise<Alert[]> {
+    const user = await this.userModel
+      .findById(userId)
+      .populate('alerts')
+      .exec();
+    return user.alerts;
   }
 }

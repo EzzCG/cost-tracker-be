@@ -20,6 +20,9 @@ export class Alert extends Document {
 
   @Prop({ required: true })
   message: string;
+
+  @Prop({ required: true })
+  userId: string;
 }
 
 export const AlertSchema = SchemaFactory.createForClass(Alert);

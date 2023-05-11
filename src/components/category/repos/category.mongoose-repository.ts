@@ -46,8 +46,8 @@ export class MongooseCategoryRepository implements CategoryRepository {
     return category;
   }
 
-  async update(id: string, newCateg: UpdateCategoryDto): Promise<Category> {
-    let updatedCategory: any = { ...newCateg };
+  async update(id: string, categoryDto: UpdateCategoryDto): Promise<Category> {
+    let updatedCategory: any = { ...categoryDto };
     const category = await this.categoryModel
       .findByIdAndUpdate(id, updatedCategory, {
         new: true,

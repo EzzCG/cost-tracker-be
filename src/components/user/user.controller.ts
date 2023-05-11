@@ -23,6 +23,8 @@ import { User } from 'src/components/user/interfaces/user.interface';
 import { JwtAuthGuard } from 'src/shared/guards/jwt-auth.guard';
 import { Category } from '../category/schemas/category.schema';
 import { UserRequest } from '../auth/middleware/user-request.interface';
+import { Expense } from '../expense/schemas/expense.schema';
+import { Alert } from '../alert/schemas/alert.schema.';
 
 @Controller('user')
 export class UserController {
@@ -74,5 +76,33 @@ export class UserController {
       );
     }
     return await this.userService.findCategoriesForUser(userId);
+  }
+
+  @Get(':id/expenses')
+  async findExpenseForUser(
+    @Param('id') userId: string,
+    @Request() req: UserRequest,
+  ): Promise<Expense[]> {
+    Logger.log('UserController=> userId: ', userId, 'req.userId: ', req.userId);
+    if (userId !== req.userId) {
+      throw new UnauthorizedException(
+        "You are not authorized to access this user's expenses.",
+      );
+    }
+    return await this.userService.findExpensesForUser(userId);
+  }
+
+  @Get(':id/alerts')
+  async findAlertsForUser(
+    @Param('id') userId: string,
+    @Request() req: UserRequest,
+  ): Promise<Alert[]> {
+    Logger.log('UserController=> userId: ', userId, 'req.userId: ', req.userId);
+    if (userId !== req.userId) {
+      throw new UnauthorizedException(
+        "You are not authorized to access this user's alerts.",
+      );
+    }
+    return await this.userService.findAlertsForUser(userId);
   }
 }

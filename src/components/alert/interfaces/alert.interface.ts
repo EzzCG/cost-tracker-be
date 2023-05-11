@@ -6,4 +6,5 @@ export interface Alert {
   frequency: number;
   message: string;
   //   category: Category;
+  userId: string;
 }

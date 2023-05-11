@@ -1,6 +1,8 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import mongoose, { Document, SchemaTypes, Types } from 'mongoose';
+import { Alert } from 'src/components/alert/schemas/alert.schema.';
 import { Category } from 'src/components/category/schemas/category.schema';
+import { Expense } from 'src/components/expense/schemas/expense.schema';
 
 @Schema()
 export class User extends Document {
@@ -19,17 +21,17 @@ export class User extends Document {
   @Prop({ required: true, default: 'user' })
   role: string;
 
-  // @Prop({ type: [{ type: Schema.Types.ObjectId, ref: 'MonthlyReport' }] })
-  // monthlyReports: MonthlyReport[];
-
-  // @Prop({ type: [{ type: Schema.Types.ObjectId, ref: 'Expense' }] })
-  // expenses: Expense[];
-
   @Prop({ type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Category' }] })
   categories: Category[];
 
-  // @Prop({ type: [{ type: Schema.Types.ObjectId, ref: 'Alert' }] })
-  // alerts: Alert[];
+  @Prop({ type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Expense' }] })
+  expenses: Expense[];
+
+  @Prop({ type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Alert' }] })
+  alerts: Alert[];
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);
+
+// @Prop({ type: [{ type: Schema.Types.ObjectId, ref: 'MonthlyReport' }] })
+// monthlyReports: MonthlyReport[];
