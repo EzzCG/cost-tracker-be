@@ -13,6 +13,7 @@ import {
   Req,
   HttpStatus,
   Logger,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { CreateCategoryDto } from './dtos/CreateCategoryDTO';
 import { UpdateCategoryDto } from './dtos/UpdateCategoryDTO';
@@ -23,10 +24,16 @@ import { JwtAuthGuard } from 'src/shared/guards/jwt-auth.guard';
 import { AuthMiddleware } from '../auth/middleware/auth.middleware';
 import { Request } from '@nestjs/common';
 import { UserRequest } from '../auth/middleware/user-request.interface';
+import { Expense } from '../expense/interfaces/expense.interface';
+import { Alert } from '../alert/schemas/alert.schema.';
+import { ExpenseService } from '../expense/services/expense.service';
 
 @Controller('category')
 export class CategoryController {
-  constructor(private readonly categoryService: CategoryService) {}
+  constructor(
+    private readonly categoryService: CategoryService,
+    private readonly expenseService: ExpenseService,
+  ) {}
 
   @Post()
   async create(
@@ -64,7 +71,55 @@ export class CategoryController {
   }
 
   @Delete(':id')
-  async delete(@Param('id') id: string): Promise<Category> {
-    return await this.categoryService.delete(id);
+  async delete(
+    @Param('id') categoryId: string,
+    @Request() req: UserRequest,
+  ): Promise<Category> {
+    return await this.categoryService.delete(categoryId, req.userId);
+  }
+
+  @Get('expenses/:id')
+  async findAllExpensesOfCategory(
+    @Param('id') categoryId: string,
+  ): Promise<Expense[]> {
+    return await this.expenseService.findAllExpensesOfCategory(categoryId);
   }
 }
+
+/*@Get('s:id/expenes')
+  async findExpenseOfCategory(
+    @Param('id') categoryId: string,
+    @Request() req: UserRequest,
+  ): Promise<Expense[]> {
+    Logger.log(
+      'UserController=> categoryId: ',
+      categoryId,
+      'req.categoryId: ',
+      req.userId,
+    );
+    if (categoryId !== req.userId) {
+      throw new UnauthorizedException(
+        "You are not authorized to access this user's expenses.",
+      );
+    }
+    return await this.categoryService.findExpensesOfCategory(categoryId);
+  }
+
+  @Get(':id/alerts')
+  async findAlertsOfCategory(
+    @Param('id') categoryId: string,
+    @Request() req: UserRequest,
+  ): Promise<Alert[]> {
+    Logger.log(
+      'UserController=> categoryId: ',
+      categoryId,
+      'req.categoryId: ',
+      req.userId,
+    );
+    if (categoryId !== req.userId) {
+      throw new UnauthorizedException(
+        "You are not authorized to access this user's alerts.",
+      );
+    }
+    return await this.categoryService.findAlertsOfCategory(categoryId);
+  }*/

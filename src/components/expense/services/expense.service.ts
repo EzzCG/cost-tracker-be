@@ -1,6 +1,6 @@
 import { Injectable, Inject, NotFoundException } from '@nestjs/common';
 
-import { Expense } from '../interfaces/expense.interface';
+import { Expense } from '../schemas/expense.schema';
 import { CreateExpenseDto } from '../dtos/CreateExpenseDTO';
 import { UpdateExpenseDto } from '../dtos/UpdateExpenseDTO';
 import { Model, Types } from 'mongoose';
@@ -14,8 +14,11 @@ export class ExpenseService {
     private readonly userService: UserService,
   ) {}
 
-  async create(expense: Expense, userId: string): Promise<Expense> {
-    const createdExpense = new this.expenseModel(expense);
+  async create(
+    createExpenseDto: CreateExpenseDto,
+    userId: string,
+  ): Promise<Expense> {
+    const createdExpense = new this.expenseModel(createExpenseDto);
     await this.userService.addExpenseToUser(
       userId,
       new Types.ObjectId(createdExpense._id),
@@ -36,6 +39,19 @@ export class ExpenseService {
     return expense;
   }
 
+  async findAllExpensesOfCategory(categoryId: string): Promise<Expense[]> {
+    const expenses = await this.expenseModel
+      .find({ categoryId: categoryId })
+      .exec();
+    if (!expenses) {
+      throw new NotFoundException(
+        `No expenses found for category with id ${categoryId}`,
+      );
+    }
+
+    return expenses;
+  }
+
   async update(id: string, expenseDto: UpdateExpenseDto): Promise<Expense> {
     let updatedExpense: any = { ...expenseDto };
     const expense = await this.expenseModel
@@ -50,6 +66,16 @@ export class ExpenseService {
     }
 
     return expense;
+  }
+
+  async updateToUnCategorized(
+    oldCategoryId: string,
+    newCategoryId: string,
+  ): Promise<void> {
+    await this.expenseModel.updateMany(
+      { categoryId: oldCategoryId },
+      { $set: { categoryId: newCategoryId } },
+    );
   }
 
   async delete(id: string): Promise<Expense> {

@@ -16,9 +16,9 @@ export interface UserRepository {
   addCategoryToUser(userId: string, categoryId: Types.ObjectId): Promise<void>;
   addExpenseToUser(userId: string, categoryId: Types.ObjectId): Promise<void>;
   addAlertToUser(userId: string, categoryId: Types.ObjectId): Promise<void>;
-  findCategoriesForUser(userId: string): Promise<Category[]>;
-  findExpensesForUser(userId: string): Promise<Expense[]>;
-  findAlertsForUser(userId: string): Promise<Alert[]>;
+  findCategoriesOfUser(userId: string): Promise<Category[]>;
+  findExpensesOfUser(userId: string): Promise<Expense[]>;
+  findAlertsOfUser(userId: string): Promise<Alert[]>;
 }
 
 export const UserRepositoryToken = Symbol('UserRepositoyToken');

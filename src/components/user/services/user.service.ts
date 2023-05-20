@@ -60,17 +60,17 @@ export class UserService {
   }
 
   //fetch categories of  a user
-  async findCategoriesForUser(userId: string): Promise<Category[]> {
-    return await this.userRepository.findCategoriesForUser(userId);
+  async findCategoriesOfUser(userId: string): Promise<Category[]> {
+    return await this.userRepository.findCategoriesOfUser(userId);
   }
 
   //fetch expenses of  a user
-  async findExpensesForUser(userId: string): Promise<Expense[]> {
-    return await this.userRepository.findExpensesForUser(userId);
+  async findExpensesOfUser(userId: string): Promise<Expense[]> {
+    return await this.userRepository.findExpensesOfUser(userId);
   }
 
   //fetch alerts of  a user
-  async findAlertsForUser(userId: string): Promise<Alert[]> {
-    return await this.userRepository.findAlertsForUser(userId);
+  async findAlertsOfUser(userId: string): Promise<Alert[]> {
+    return await this.userRepository.findAlertsOfUser(userId);
   }
 }

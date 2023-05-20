@@ -14,11 +14,15 @@ export class Expense extends Document {
 
   @Prop({ required: true })
   userId: string;
-  //   @Prop({ type: Schema.Types.ObjectId, ref: 'Category' })
-  //   category: string;
 
-  //   @Prop({ type: Schema.Types.ObjectId, ref: 'Attachment' })
-  //   attachment: string;
+  @Prop({ required: true })
+  categoryId: string;
 }
 
 export const ExpenseSchema = SchemaFactory.createForClass(Expense);
+
+//   @Prop({ type: Schema.Types.ObjectId, ref: 'Category' })
+//   category: string;
+
+//   @Prop({ type: Schema.Types.ObjectId, ref: 'Attachment' })
+//   attachment: string;

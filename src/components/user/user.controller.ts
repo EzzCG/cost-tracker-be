@@ -65,7 +65,7 @@ export class UserController {
   }
 
   @Get(':id/categories')
-  async findCategoriesForUser(
+  async findCategoriesOfUser(
     @Param('id') userId: string,
     @Request() req: UserRequest,
   ): Promise<Category[]> {
@@ -75,11 +75,11 @@ export class UserController {
         "You are not authorized to access this user's categories.",
       );
     }
-    return await this.userService.findCategoriesForUser(userId);
+    return await this.userService.findCategoriesOfUser(userId);
   }
 
   @Get(':id/expenses')
-  async findExpenseForUser(
+  async findExpenseOfUser(
     @Param('id') userId: string,
     @Request() req: UserRequest,
   ): Promise<Expense[]> {
@@ -89,11 +89,11 @@ export class UserController {
         "You are not authorized to access this user's expenses.",
       );
     }
-    return await this.userService.findExpensesForUser(userId);
+    return await this.userService.findExpensesOfUser(userId);
   }
 
   @Get(':id/alerts')
-  async findAlertsForUser(
+  async findAlertsOfUser(
     @Param('id') userId: string,
     @Request() req: UserRequest,
   ): Promise<Alert[]> {
@@ -103,6 +103,6 @@ export class UserController {
         "You are not authorized to access this user's alerts.",
       );
     }
-    return await this.userService.findAlertsForUser(userId);
+    return await this.userService.findAlertsOfUser(userId);
   }
 }

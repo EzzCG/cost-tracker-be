@@ -25,13 +25,11 @@ export class ExpenseController {
     @Body() createExpenseDto: CreateExpenseDto,
     @Request() req: UserRequest,
   ): Promise<Expense | any> {
-    return await this.expenseService.create(
-      {
-        userId: req.userId,
-        ...createExpenseDto,
-      },
+    const createdExpense = await this.expenseService.create(
+      createExpenseDto,
       req.userId,
     );
+    return createdExpense;
   }
 
   @UseGuards(JwtAuthGuard)

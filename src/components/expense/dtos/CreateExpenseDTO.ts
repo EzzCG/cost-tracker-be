@@ -18,16 +18,20 @@ export class CreateExpenseDto {
   @IsNotEmpty()
   amount: number;
 
-  //   @IsOptional()
-  //   @Type(() => CreateAttachmentDto)
-  //   @ValidateNested()
-  //   attachment?: CreateAttachmentDto;
-
   @IsString()
   @IsNotEmpty()
   date: string;
 
-  //   @Type(() => CreateCategoryDto)
-  //   @ValidateNested()
-  //   category: CreateCategoryDto;
+  @IsString()
+  @IsNotEmpty()
+  readonly categoryId: string;
 }
+
+//   @IsOptional()
+//   @Type(() => CreateAttachmentDto)
+//   @ValidateNested()
+//   attachment?: CreateAttachmentDto;
+
+//   @Type(() => CreateCategoryDto)
+//   @ValidateNested()
+//   category: CreateCategoryDto;
