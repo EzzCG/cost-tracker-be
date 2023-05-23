@@ -21,10 +21,6 @@ export class CategoryService {
   async create(category: Category, userId: string): Promise<Category> {
     Logger.log('CategoryService->userId is: ', userId);
     const createdCategory = await this.CategoryRepository.create(category);
-    await this.userService.addCategoryToUser(
-      userId,
-      new Types.ObjectId(createdCategory.id),
-    ); // Method which adds the category ID to the user who created it
 
     return createdCategory;
   }
@@ -45,9 +41,10 @@ export class CategoryService {
     return await this.CategoryRepository.delete(categoryId, userId);
   }
 
-  // async createDefaultCategory(userId: string): Promise<Category> {
-  //   return await this.CategoryRepository.createDefaultCategory(userId);
-  // }
+  //fetch alerts of  a user
+  async findAlertsOfCategory(categoryId: string): Promise<Alert[]> {
+    return await this.CategoryRepository.findAlertsOfCategory(categoryId);
+  }
 }
 
 //after creating new expense, we add it's id to the user
@@ -68,9 +65,4 @@ export class CategoryService {
 // //fetch expenses of  a user
 // async findExpensesOfCategory(categoryId: string): Promise<Expense[]> {
 //   return await this.CategoryRepository.findExpensesOfCategory(categoryId);
-// }
-
-// //fetch alerts of  a user
-// async findAlertsOfCategory(categoryId: string): Promise<Alert[]> {
-//   return await this.CategoryRepository.findAlertsOfCategory(categoryId);
 // }

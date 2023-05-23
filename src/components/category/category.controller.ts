@@ -27,6 +27,7 @@ import { UserRequest } from '../auth/middleware/user-request.interface';
 import { Expense } from '../expense/interfaces/expense.interface';
 import { Alert } from '../alert/schemas/alert.schema.';
 import { ExpenseService } from '../expense/services/expense.service';
+import { AuthGuard } from './guards/authguard';
 
 @Controller('category')
 export class CategoryController {
@@ -57,16 +58,32 @@ export class CategoryController {
     return await this.categoryService.findAll();
   }
 
+  @UseGuards(JwtAuthGuard, AuthGuard)
   @Get(':id')
-  async findOne(@Param('id') id: string): Promise<Category> {
-    return this.categoryService.findOne(id);
+  async findOne(
+    @Param('id') id: string,
+    // @Request() req: UserRequest,
+  ): Promise<Category> {
+    const category = await this.categoryService.findOne(id);
+    //we make sure user cant access other users categories
+    // if (category.userId != req.userId) {
+    //   throw new UnauthorizedException(
+    //     'Category ' + id + ' does not correspond to logged in user.',
+    //   );
+    // }
+    return category;
   }
 
   @Put(':id')
   async update(
     @Param('id') id: string,
     @Body() updateCategoryDto: UpdateCategoryDto,
+    // @Request() req: UserRequest,
   ): Promise<Category> {
+    // const category = await this.findOne(id,req);
+    // if(this.findOne(id,req)){
+
+    // }
     return await this.categoryService.update(id, updateCategoryDto);
   }
 
@@ -83,6 +100,20 @@ export class CategoryController {
     @Param('id') categoryId: string,
   ): Promise<Expense[]> {
     return await this.expenseService.findAllExpensesOfCategory(categoryId);
+  }
+
+  @Get(':id/alerts')
+  async findAlertsOfCategory(
+    @Param('id') categoryId: string,
+    @Request() req: UserRequest,
+  ): Promise<Alert[]> {
+    //you gotta send the user id in the endpoint to do access validation
+    // if (categoryId !== req.userId) {
+    //   throw new UnauthorizedException(
+    //     "You are not authorized to access this user's alerts.",
+    //   );
+    // }
+    return await this.categoryService.findAlertsOfCategory(categoryId);
   }
 }
 
@@ -105,21 +136,4 @@ export class CategoryController {
     return await this.categoryService.findExpensesOfCategory(categoryId);
   }
 
-  @Get(':id/alerts')
-  async findAlertsOfCategory(
-    @Param('id') categoryId: string,
-    @Request() req: UserRequest,
-  ): Promise<Alert[]> {
-    Logger.log(
-      'UserController=> categoryId: ',
-      categoryId,
-      'req.categoryId: ',
-      req.userId,
-    );
-    if (categoryId !== req.userId) {
-      throw new UnauthorizedException(
-        "You are not authorized to access this user's alerts.",
-      );
-    }
-    return await this.categoryService.findAlertsOfCategory(categoryId);
-  }*/
+  */

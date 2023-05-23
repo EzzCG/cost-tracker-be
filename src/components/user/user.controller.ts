@@ -32,7 +32,11 @@ export class UserController {
   //adding comment to test
   @Post()
   async create(@Body() createUserDto: CreateUserDto): Promise<User | any> {
-    return await this.userService.create(createUserDto);
+    const user = {
+      ...createUserDto,
+      email: createUserDto.email.toLocaleLowerCase(),
+    }; //we convert email to lowercase
+    return await this.userService.create(user);
   }
 
   @UseGuards(JwtAuthGuard)

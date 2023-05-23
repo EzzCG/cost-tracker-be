@@ -6,16 +6,11 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-//   import { CreateCategoryDto } from './CreateCategoryDto';
 
 export class CreateAlertDto {
   @IsString()
   @IsNotEmpty()
   name: string;
-
-  // @Type(() => CreateCategoryDto)
-  // @ValidateNested()
-  // category: CreateCategoryDto;
 
   @IsString()
   @IsNotEmpty()
@@ -32,4 +27,8 @@ export class CreateAlertDto {
   @IsString()
   @IsNotEmpty()
   message: string;
+
+  @IsString()
+  @IsNotEmpty()
+  category: string;
 }

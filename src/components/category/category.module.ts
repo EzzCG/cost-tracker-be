@@ -7,11 +7,13 @@ import { CategorySchema } from './schemas/category.schema';
 import { CategoryService } from './services/category.service';
 import { UserModule } from '../user/user.module';
 import { ExpenseModule } from '../expense/expense.module';
+import { AlertModule } from '../alert/alert.module';
 
 @Module({
   imports: [
     MongooseModule.forFeature([{ name: 'Category', schema: CategorySchema }]),
     forwardRef(() => UserModule),
+    forwardRef(() => AlertModule),
     ExpenseModule,
   ],
   controllers: [CategoryController],

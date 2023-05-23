@@ -31,12 +31,15 @@ import {
   CategoryRepository,
   CategoryRepositoryToken,
 } from 'src/components/category/repos/category.repository';
+import { AlertService } from 'src/components/alert/services/alert.service';
 @Injectable()
 export class MongooseUserRepository implements UserRepository {
   constructor(
     @InjectModel('User') private readonly userModel: Model<User>,
     @Inject(forwardRef(() => CategoryRepositoryToken))
     private categoryRepository: CategoryRepository,
+    @Inject(forwardRef(() => AlertService))
+    private alertService: AlertService,
   ) {}
 
   async create(user: CreateUserDto): Promise<User> {
@@ -86,13 +89,19 @@ export class MongooseUserRepository implements UserRepository {
   async addCategoryToUser(
     userId: string,
     categoryId: Types.ObjectId,
+    session: any,
   ): Promise<void> {
-    Logger.log('addCategoryToUser-> userId: ', userId);
-    Logger.log('addCategoryToUser-> categoryId: ', categoryId);
-    await this.userModel
-      .findByIdAndUpdate(userId, { $push: { categories: categoryId } })
+    const user = await this.userModel
+      .findByIdAndUpdate(
+        userId,
+        { $push: { categories: categoryId } },
+        { session },
+      )
       .exec();
-    Logger.log('addCategoryToUser-> END: ');
+
+    if (!user) {
+      throw new NotFoundException(`User with ID '${userId}' not found`);
+    }
   }
 
   async findAll(): Promise<User[]> {
@@ -139,9 +148,11 @@ export class MongooseUserRepository implements UserRepository {
     try {
       await checkIdType(id);
 
-      await this.categoryRepository.deleteAllByUserId(id, session); // Delete all categories of the user
-
-      const user = await this.userModel.findByIdAndRemove(id).exec();
+      await this.categoryRepository.deleteAllCategoriesOfUserId(id, session); // Delete all categories of the user
+      await this.alertService.deleteAllAlertsOfUserId(id, session);
+      const user = await this.userModel
+        .findByIdAndRemove(id, { session })
+        .exec();
       await checkUserFound(user, id);
 
       await session.commitTransaction();
@@ -157,19 +168,85 @@ export class MongooseUserRepository implements UserRepository {
     }
   }
 
+  async deleteAlertFromUser(
+    userId: string,
+    alertId: string,
+    session: any,
+  ): Promise<User> {
+    const user = await this.userModel
+      .findByIdAndUpdate(userId, { $pull: { alerts: alertId } }, { session })
+      .exec();
+    if (!user) {
+      throw new NotFoundException(`User with ID '${userId}' not found`);
+    }
+    return user;
+  }
+
+  async deleteCategoryFromUser(
+    userId: string,
+    categId: string,
+    session: any,
+  ): Promise<User> {
+    const user = await this.userModel
+      .findByIdAndUpdate(
+        userId,
+        { $pull: { categories: categId } },
+        { session },
+      )
+      .exec();
+    if (!user) {
+      throw new NotFoundException(`User with ID '${userId}' not found`);
+    }
+    return user;
+  }
+
+  async deleteExpenseFromUser(
+    userId: string,
+    expenseId: string,
+    session: any,
+  ): Promise<User> {
+    const user = await this.userModel
+      .findByIdAndUpdate(
+        userId,
+        { $pull: { expenses: expenseId } },
+        { session },
+      )
+      .exec();
+    if (!user) {
+      throw new NotFoundException(`User with ID '${userId}' not found`);
+    }
+    return user;
+  }
+
   async addExpenseToUser(
     userId: string,
     expenseId: Types.ObjectId,
+    session: any,
   ): Promise<void> {
-    await this.userModel
-      .findByIdAndUpdate(userId, { $push: { expenses: expenseId } })
+    const user = this.userModel
+      .findByIdAndUpdate(
+        userId,
+        { $push: { expenses: expenseId } },
+        { session },
+      )
       .exec();
+    if (!user) {
+      throw new NotFoundException(`User with ID '${userId}' not found`);
+    }
   }
 
-  async addAlertToUser(userId: string, alertId: Types.ObjectId): Promise<void> {
-    await this.userModel
-      .findByIdAndUpdate(userId, { $push: { alerts: alertId } })
+  async addAlertToUser(
+    userId: string,
+    alertId: Types.ObjectId,
+    session: any,
+  ): Promise<void> {
+    const user = this.userModel
+      .findByIdAndUpdate(userId, { $push: { alerts: alertId } }, { session })
       .exec();
+
+    if (!user) {
+      throw new NotFoundException(`User with ID '${userId}' not found`);
+    }
   }
 
   async findCategoriesOfUser(userId: string): Promise<Category[]> {

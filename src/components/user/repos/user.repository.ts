@@ -13,9 +13,36 @@ export interface UserRepository {
   update(id: string, user: UpdateUserDto): Promise<User>;
   create(user: CreateUserDto): Promise<User>;
   delete(id: string): Promise<User>;
-  addCategoryToUser(userId: string, categoryId: Types.ObjectId): Promise<void>;
-  addExpenseToUser(userId: string, categoryId: Types.ObjectId): Promise<void>;
-  addAlertToUser(userId: string, categoryId: Types.ObjectId): Promise<void>;
+  deleteAlertFromUser(
+    userId: string,
+    alertId: string,
+    session: any,
+  ): Promise<User>;
+  deleteCategoryFromUser(
+    userId: string,
+    catgId: string,
+    session: any,
+  ): Promise<User>;
+  deleteExpenseFromUser(
+    userId: string,
+    expenseId: string,
+    session: any,
+  ): Promise<User>;
+  addCategoryToUser(
+    userId: string,
+    categoryId: Types.ObjectId,
+    session: any,
+  ): Promise<void>;
+  addExpenseToUser(
+    userId: string,
+    categoryId: Types.ObjectId,
+    session: any,
+  ): Promise<void>;
+  addAlertToUser(
+    userId: string,
+    categoryId: Types.ObjectId,
+    session: any,
+  ): Promise<void>;
   findCategoriesOfUser(userId: string): Promise<Category[]>;
   findExpensesOfUser(userId: string): Promise<Expense[]>;
   findAlertsOfUser(userId: string): Promise<Alert[]>;

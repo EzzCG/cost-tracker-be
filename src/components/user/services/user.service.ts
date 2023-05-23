@@ -38,27 +38,6 @@ export class UserService {
     return await this.userRepository.delete(id);
   }
 
-  //after creating new category, we add it's id to the user
-  async addCategoryToUser(
-    userId: string,
-    categoryId: Types.ObjectId,
-  ): Promise<void> {
-    await this.userRepository.addCategoryToUser(userId, categoryId);
-  }
-
-  //after creating new expense, we add it's id to the user
-  async addExpenseToUser(
-    userId: string,
-    expenseId: Types.ObjectId,
-  ): Promise<void> {
-    await this.userRepository.addExpenseToUser(userId, expenseId);
-  }
-
-  //after creating new alert, we add it's id to the user
-  async addAlertToUser(userId: string, alertId: Types.ObjectId): Promise<void> {
-    await this.userRepository.addAlertToUser(userId, alertId);
-  }
-
   //fetch categories of  a user
   async findCategoriesOfUser(userId: string): Promise<Category[]> {
     return await this.userRepository.findCategoriesOfUser(userId);

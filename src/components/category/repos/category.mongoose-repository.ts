@@ -6,6 +6,7 @@ import {
   Logger,
   NotFoundException,
   Req,
+  UseGuards,
   forwardRef,
 } from '@nestjs/common';
 // import {
@@ -31,6 +32,8 @@ import {
 } from 'src/components/user/repos/user.repository';
 import { create } from 'domain';
 import { async } from 'rxjs';
+import { AuthGuard } from '@nestjs/passport';
+import { AlertService } from 'src/components/alert/services/alert.service';
 
 @Injectable()
 export class MongooseCategoryRepository implements CategoryRepository {
@@ -40,22 +43,39 @@ export class MongooseCategoryRepository implements CategoryRepository {
     private expenseService: ExpenseService,
     @Inject(forwardRef(() => UserRepositoryToken))
     private userRepository: UserRepository,
+    @Inject(forwardRef(() => AlertService))
+    private alertService: AlertService,
   ) {}
 
   async create(categoryDto: Category): Promise<Category> {
+    const session = await this.categoryModel.db.startSession(); //we start a session here of dif queries
+    session.startTransaction(); //incase of an error, all queries, won't take effect
+
     Logger.log('CategoryRepo->categoryDto is: ', categoryDto);
 
     const createdCategory = new this.categoryModel(categoryDto);
     //we check not to create a category with the same name
     try {
-      return await createdCategory.save();
+      await this.userRepository.addCategoryToUser(
+        createdCategory.userId,
+        new Types.ObjectId(createdCategory.id),
+        session,
+      ); // Method which adds the category ID to the user who created it
+      await createdCategory.save({ session });
+
+      await session.commitTransaction();
+
+      return createdCategory;
     } catch (error) {
       if (error.code === 11000) {
+        await session.abortTransaction();
         throw new ConflictException(
-          'You already have a category with this name.',
+          'You already have a category with the name ' + createdCategory.name,
         );
+        throw error;
       }
-      throw error;
+    } finally {
+      session.endSession();
     }
   }
 
@@ -69,6 +89,16 @@ export class MongooseCategoryRepository implements CategoryRepository {
       throw new NotFoundException(`Category with ID '${id}' not found`);
     }
     return category;
+  }
+  @UseGuards(AuthGuard)
+  async findOneByName(name: string, userId: string): Promise<string> {
+    const category = await this.categoryModel
+      .findOne({ name: name, userId: userId })
+      .exec();
+    if (!category) {
+      throw new NotFoundException(`Category with name '${name}' not found`);
+    }
+    return category._id;
   }
 
   async update(id: string, categoryDto: UpdateCategoryDto): Promise<Category> {
@@ -88,46 +118,97 @@ export class MongooseCategoryRepository implements CategoryRepository {
   }
 
   async delete(categoryId: string, userId: string): Promise<Category> {
-    //we find the defaultCategory of the user
-    const defaultCategory = await this.categoryModel.findOne({
-      userId: userId,
-      name: 'Uncategorized',
-    });
+    const session = await this.categoryModel.db.startSession();
+    session.startTransaction();
 
-    const deletedCategory = await this.categoryModel
-      .findByIdAndRemove(categoryId)
-      .exec();
-    if (!deletedCategory) {
-      throw new NotFoundException(`Category with ID '${categoryId}' not found`);
-    }
+    try {
+      const deletedCategory = await this.categoryModel
+        .findByIdAndRemove(categoryId, { session })
+        .exec();
+      if (!deletedCategory) {
+        throw new NotFoundException(
+          `Category with ID '${categoryId}' not found`,
+        );
+      }
 
-    // find all expenses with the category to be deleted
-    const expenses = await this.expenseService.findAllExpensesOfCategory(
-      categoryId,
-    );
+      // //we find the defaultCategory of the user
+      // const defaultCategory = await this.categoryModel.findOne({
+      //   userId: userId,
+      //   name: 'Uncategorized',
+      // });
 
-    if (expenses.length > 0) {
-      await this.expenseService.updateToUnCategorized(
-        categoryId,
-        defaultCategory.id,
+      // // find all expenses with the category to be deleted
+      // const expenses = await this.expenseService.findAllExpensesOfCategory(
+      //   categoryId,
+      // );
+
+      // if (expenses.length > 0) {
+      //   await this.expenseService.updateToUnCategorized(
+      //     categoryId,
+      //     defaultCategory.id,
+      //     session,
+      //   );
+      // }
+
+      await this.userRepository.deleteCategoryFromUser(
+        userId,
+        deletedCategory.id,
+        session,
       );
-    }
 
-    return deletedCategory;
+      const deletedAlertIds =
+        await this.alertService.deleteAllAlertsOfCategoryId(
+          deletedCategory.id,
+          session,
+        );
+
+      for (const alertId of deletedAlertIds) {
+        await this.userRepository.deleteAlertFromUser(userId, alertId, session);
+      }
+      await session.commitTransaction();
+
+      return deletedCategory;
+    } catch (error) {
+      await session.abortTransaction();
+      throw error;
+    } finally {
+      session.endSession();
+    }
   }
 
-  async deleteAllByUserId(userId: string, session: any): Promise<void> {
+  async deleteAllCategoriesOfUserId(
+    userId: string,
+    session: any,
+  ): Promise<void> {
     await this.categoryModel
       .deleteMany({ userId: userId })
       .session(session)
       .exec();
   }
 
+  async deleteAlertFromCategory(
+    alertId: string,
+    categoryId: string,
+    session: any,
+  ): Promise<Category> {
+    const category = await this.categoryModel
+      .findByIdAndUpdate(
+        categoryId,
+        { $pull: { alerts: alertId } },
+        { session },
+      )
+      .exec();
+    if (!category) {
+      throw new NotFoundException(`Category with ID '${categoryId}' not found`);
+    }
+    return category;
+  }
+
   async createDefaultCategory(userId: string, session: any): Promise<Category> {
     Logger.log('createDefaultCategory-> userId: ', userId);
     const defaultCategory = new this.categoryModel({
       userId: userId,
-      name: 'Uncategorized',
+      name: 'uncategorized',
       maxValue: 0,
       minValue: 0,
     });
@@ -135,6 +216,32 @@ export class MongooseCategoryRepository implements CategoryRepository {
     // this.userRepository.addCategoryToUser(userId, defaultCategory._id);
 
     return await defaultCategory.save({ session }); // use session
+  }
+
+  async addAlertToCategory(
+    categoryId: string,
+    alertId: Types.ObjectId,
+    session: any,
+  ): Promise<void> {
+    const category = await this.categoryModel
+      .findByIdAndUpdate(
+        categoryId,
+        { $push: { alerts: alertId } },
+        { session },
+      )
+      .exec();
+
+    if (!category) {
+      throw new NotFoundException(`Category with ID '${categoryId}' not found`);
+    }
+  }
+
+  async findAlertsOfCategory(categoryId: string): Promise<Alert[]> {
+    const category = await this.categoryModel
+      .findById(categoryId)
+      .populate('alerts')
+      .exec();
+    return category.alerts;
   }
 }
 

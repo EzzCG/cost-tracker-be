@@ -5,26 +5,42 @@ import { CreateExpenseDto } from '../dtos/CreateExpenseDTO';
 import { UpdateExpenseDto } from '../dtos/UpdateExpenseDTO';
 import { Model, Types } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
-import { UserService } from 'src/components/user/services/user.service';
+import {
+  UserRepository,
+  UserRepositoryToken,
+} from 'src/components/user/repos/user.repository';
 
 @Injectable()
 export class ExpenseService {
   constructor(
     @InjectModel('Expense') private readonly expenseModel: Model<Expense>,
-    private readonly userService: UserService,
+    @Inject(UserRepositoryToken) private userRepository: UserRepository,
   ) {}
 
   async create(
     createExpenseDto: CreateExpenseDto,
     userId: string,
   ): Promise<Expense> {
-    const createdExpense = new this.expenseModel(createExpenseDto);
-    await this.userService.addExpenseToUser(
-      userId,
-      new Types.ObjectId(createdExpense._id),
-    ); // Method which adds the category ID to the user who created it
+    const session = await this.expenseModel.db.startSession(); //we start a session here of dif queries
+    session.startTransaction(); //incase of an error, all queries, won't take effect
 
-    return createdExpense.save();
+    try {
+      const createdExpense = new this.expenseModel(createExpenseDto);
+      await this.userRepository.addExpenseToUser(
+        userId,
+        new Types.ObjectId(createdExpense._id),
+        session,
+      ); // Method which adds the category ID to the user who created it
+
+      await createdExpense.save();
+      await session.commitTransaction();
+      return createdExpense;
+    } catch (error) {
+      await session.abortTransaction();
+      throw error;
+    } finally {
+      session.endSession();
+    }
   }
 
   async findAll(): Promise<Expense[]> {
@@ -71,10 +87,12 @@ export class ExpenseService {
   async updateToUnCategorized(
     oldCategoryId: string,
     newCategoryId: string,
+    session: any,
   ): Promise<void> {
     await this.expenseModel.updateMany(
       { categoryId: oldCategoryId },
       { $set: { categoryId: newCategoryId } },
+      { session },
     );
   }
 
