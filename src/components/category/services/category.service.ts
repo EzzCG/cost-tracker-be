@@ -45,24 +45,8 @@ export class CategoryService {
   async findAlertsOfCategory(categoryId: string): Promise<Alert[]> {
     return await this.CategoryRepository.findAlertsOfCategory(categoryId);
   }
+
+  async findExpensesOfCategory(categoryId: string): Promise<Expense[]> {
+    return await this.CategoryRepository.findExpensesOfCategory(categoryId);
+  }
 }
-
-//after creating new expense, we add it's id to the user
-// async addExpenseToCategory(
-//   categoryId: string,
-//   expenseId: Types.ObjectId,
-// ): Promise<void> {
-//   await this.CategoryRepository.addExpenseToCategory(categoryId, expenseId);
-// }
-// //after creating new alert, we add it's id to the user
-// async addAlertToCategory(
-//   categoryId: string,
-//   alertId: Types.ObjectId,
-// ): Promise<void> {
-//   await this.CategoryRepository.addAlertToCategory(categoryId, alertId);
-// }
-
-// //fetch expenses of  a user
-// async findExpensesOfCategory(categoryId: string): Promise<Expense[]> {
-//   return await this.CategoryRepository.findExpensesOfCategory(categoryId);
-// }

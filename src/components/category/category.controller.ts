@@ -31,10 +31,7 @@ import { AuthGuard } from './guards/authguard';
 
 @Controller('category')
 export class CategoryController {
-  constructor(
-    private readonly categoryService: CategoryService,
-    private readonly expenseService: ExpenseService,
-  ) {}
+  constructor(private readonly categoryService: CategoryService) {}
 
   @Post()
   async create(
@@ -85,11 +82,12 @@ export class CategoryController {
     return await this.categoryService.delete(categoryId, req.userId);
   }
 
-  @Get('expenses/:id')
-  async findAllExpensesOfCategory(
+  @Get(':id/expenses')
+  async findExpensesOfCategory(
     @Param('id') categoryId: string,
+    @Request() req: UserRequest,
   ): Promise<Expense[]> {
-    return await this.expenseService.findAllExpensesOfCategory(categoryId);
+    return await this.categoryService.findExpensesOfCategory(categoryId);
   }
 
   @Get(':id/alerts')

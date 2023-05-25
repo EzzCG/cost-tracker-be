@@ -32,6 +32,7 @@ import {
   CategoryRepositoryToken,
 } from 'src/components/category/repos/category.repository';
 import { AlertService } from 'src/components/alert/services/alert.service';
+import { ExpenseService } from 'src/components/expense/services/expense.service';
 @Injectable()
 export class MongooseUserRepository implements UserRepository {
   constructor(
@@ -40,6 +41,8 @@ export class MongooseUserRepository implements UserRepository {
     private categoryRepository: CategoryRepository,
     @Inject(forwardRef(() => AlertService))
     private alertService: AlertService,
+    @Inject(forwardRef(() => ExpenseService))
+    private expenseService: ExpenseService,
   ) {}
 
   async create(user: CreateUserDto): Promise<User> {
@@ -87,11 +90,8 @@ export class MongooseUserRepository implements UserRepository {
     session: any,
   ): Promise<void> {
     const user = await this.userModel
-      .findByIdAndUpdate(
-        userId,
-        { $push: { categories: categoryId } },
-        { session },
-      )
+      .findByIdAndUpdate(userId, { $push: { categories: categoryId } })
+      .session(session)
       .exec();
 
     if (!user) {
@@ -145,8 +145,11 @@ export class MongooseUserRepository implements UserRepository {
 
       await this.categoryRepository.deleteAllCategoriesOfUserId(id, session); // Delete all categories of the user
       await this.alertService.deleteAllAlertsOfUserId(id, session);
+      await this.expenseService.deleteAllExpensesOfUserId(id, session);
+
       const user = await this.userModel
-        .findByIdAndRemove(id, { session })
+        .findByIdAndRemove(id)
+        .session(session)
         .exec();
       await checkUserFound(user, id);
 
@@ -156,7 +159,11 @@ export class MongooseUserRepository implements UserRepository {
     } catch (error) {
       // If an error occurred, abort the transaction
       await session.abortTransaction();
-      throw error;
+      if (error instanceof NotFoundException) {
+        throw new NotFoundException(error.message);
+      } else {
+        throw new InternalServerErrorException(error.messageerror.message);
+      }
     } finally {
       // End the session
       session.endSession();
@@ -169,7 +176,8 @@ export class MongooseUserRepository implements UserRepository {
     session: any,
   ): Promise<User> {
     const user = await this.userModel
-      .findByIdAndUpdate(userId, { $pull: { alerts: alertId } }, { session })
+      .findByIdAndUpdate(userId, { $pull: { alerts: alertId } })
+      .session(session)
       .exec();
     if (!user) {
       throw new NotFoundException(`User with ID '${userId}' not found`);
@@ -183,11 +191,8 @@ export class MongooseUserRepository implements UserRepository {
     session: any,
   ): Promise<User> {
     const user = await this.userModel
-      .findByIdAndUpdate(
-        userId,
-        { $pull: { categories: categId } },
-        { session },
-      )
+      .findByIdAndUpdate(userId, { $pull: { categories: categId } })
+      .session(session)
       .exec();
     if (!user) {
       throw new NotFoundException(`User with ID '${userId}' not found`);
@@ -201,11 +206,8 @@ export class MongooseUserRepository implements UserRepository {
     session: any,
   ): Promise<User> {
     const user = await this.userModel
-      .findByIdAndUpdate(
-        userId,
-        { $pull: { expenses: expenseId } },
-        { session },
-      )
+      .findByIdAndUpdate(userId, { $pull: { expenses: expenseId } })
+      .session(session)
       .exec();
     if (!user) {
       throw new NotFoundException(`User with ID '${userId}' not found`);
@@ -219,11 +221,8 @@ export class MongooseUserRepository implements UserRepository {
     session: any,
   ): Promise<void> {
     const user = this.userModel
-      .findByIdAndUpdate(
-        userId,
-        { $push: { expenses: expenseId } },
-        { session },
-      )
+      .findByIdAndUpdate(userId, { $push: { expenses: expenseId } })
+      .session(session)
       .exec();
     if (!user) {
       throw new NotFoundException(`User with ID '${userId}' not found`);
@@ -236,7 +235,8 @@ export class MongooseUserRepository implements UserRepository {
     session: any,
   ): Promise<void> {
     const user = this.userModel
-      .findByIdAndUpdate(userId, { $push: { alerts: alertId } }, { session })
+      .findByIdAndUpdate(userId, { $push: { alerts: alertId } })
+      .session(session)
       .exec();
 
     if (!user) {

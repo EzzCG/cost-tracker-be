@@ -2,13 +2,13 @@ import {
   ConflictException,
   Inject,
   Injectable,
+  InternalServerErrorException,
   Logger,
   NotFoundException,
   forwardRef,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { UpdateExpenseDto } from 'src/components/expense/dtos/expense.update.dto';
 import { Expense } from 'src/components/expense/schemas/expense.schema';
 import { Alert } from '../schemas/alert.schema.';
 import {
@@ -20,6 +20,7 @@ import {
   UserRepository,
   UserRepositoryToken,
 } from 'src/components/user/repos/user.repository';
+import { UpdateAlertDto } from '../dtos/alert.update.dto';
 
 @Injectable()
 export class AlertService {
@@ -35,20 +36,23 @@ export class AlertService {
     const session = await this.alertModel.db.startSession(); //we start a session here of dif queries
     session.startTransaction(); //incase of an error, all queries, won't take effect
 
-    const categoryName = createAlertDto.category;
-    const categId = await this.categoryRepository.findOneByName(
-      categoryName,
-      userId,
-    );
-    delete createAlertDto.category; //remove the category field because it doesn't belong in the schema
-    const alert = {
-      ...createAlertDto,
-      userId: userId,
-      categoryId: categId,
-    };
-    const createdAlert = new this.alertModel(alert);
-
     try {
+      const categoryName = createAlertDto.category;
+      Logger.log('categoryName: ' + categoryName);
+      const categId = await this.categoryRepository.findOneByName(
+        categoryName,
+        userId,
+        session,
+      );
+      Logger.log('categId: ' + categId);
+
+      delete createAlertDto.category; //remove the category field because it doesn't belong in the schema
+      const alert = {
+        ...createAlertDto,
+        userId: userId,
+        categoryId: categId,
+      };
+      const createdAlert = new this.alertModel(alert);
       await this.userRepository.addAlertToUser(
         userId,
         new Types.ObjectId(createdAlert._id),
@@ -62,16 +66,19 @@ export class AlertService {
       );
 
       await createdAlert.save({ session });
-
       await session.commitTransaction();
       return createdAlert;
     } catch (error) {
-      if (error.code === 11000) {
-        await session.abortTransaction();
+      await session.abortTransaction();
+
+      if (error instanceof NotFoundException) {
+        throw new NotFoundException(error.message);
+      } else if (error.code === 11000) {
         throw new ConflictException(
-          'You already have an alert with the name ' + createdAlert.name,
+          'You already have an alert with the name ' + createAlertDto.name,
         );
-        throw error;
+      } else {
+        throw new InternalServerErrorException(error.message);
       }
     } finally {
       session.endSession();
@@ -85,12 +92,12 @@ export class AlertService {
   async findOne(id: string): Promise<Alert> {
     const alert = await this.alertModel.findById(id).exec();
     if (!alert) {
-      throw new NotFoundException(`Expense with ID '${id}' not found`);
+      throw new NotFoundException(`Alert with ID '${id}' not found`);
     }
     return alert;
   }
 
-  async update(id: string, alertDto: UpdateExpenseDto): Promise<Alert> {
+  async update(id: string, alertDto: UpdateAlertDto): Promise<Alert> {
     let updatedAlert: any = { ...alertDto };
     const alert = await this.alertModel
       .findByIdAndUpdate(id, updatedAlert, {
@@ -112,7 +119,8 @@ export class AlertService {
 
     try {
       const deletedAlert = await this.alertModel
-        .findByIdAndRemove(id, { session })
+        .findByIdAndRemove(id)
+        .session(session)
         .exec();
 
       if (!deletedAlert) {
@@ -131,11 +139,14 @@ export class AlertService {
       );
 
       await session.commitTransaction();
-
       return deletedAlert;
     } catch (error) {
       await session.abortTransaction();
-      throw error;
+      if (error instanceof NotFoundException) {
+        throw new NotFoundException(error.message);
+      } else {
+        throw new InternalServerErrorException(error.message);
+      }
     } finally {
       session.endSession();
     }

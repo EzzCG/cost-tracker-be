@@ -23,7 +23,7 @@ export class CreateExpenseDto {
 
   @IsString()
   @IsNotEmpty()
-  readonly categoryId: string;
+  category: string;
 }
 
 //   @IsOptional()

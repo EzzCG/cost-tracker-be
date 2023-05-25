@@ -20,6 +20,9 @@ export class Category extends Document {
 
   @Prop({ type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Alert' }] })
   alerts: Alert[];
+
+  @Prop({ type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Expense' }] })
+  expenses: Expense[];
 }
 
 export const CategorySchema = SchemaFactory.createForClass(Category);
