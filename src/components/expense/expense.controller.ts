@@ -9,8 +9,8 @@ import {
   UseGuards,
   Request,
 } from '@nestjs/common';
-import { CreateExpenseDto } from './dtos/CreateExpenseDTO';
-import { UpdateExpenseDto } from './dtos/UpdateExpenseDTO';
+import { CreateExpenseDto } from './dtos/expense.create.dto';
+import { UpdateExpenseDto } from './dtos/expense.update.dto';
 import { Expense } from './interfaces/expense.interface';
 import { ExpenseService } from './services/expense.service';
 import { UserRequest } from '../auth/middleware/user-request.interface';

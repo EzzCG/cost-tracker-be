@@ -3,7 +3,5 @@ export interface Category {
   name: string;
   maxValue: number;
   minValue: number;
-  // expenses?: Expense[];
-  // alerts?: Alert[];
   userId: string;
 }

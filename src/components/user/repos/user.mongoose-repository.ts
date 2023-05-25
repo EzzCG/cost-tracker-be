@@ -66,23 +66,18 @@ export class MongooseUserRepository implements UserRepository {
       if (!defaultCategory) {
         throw new NotFoundException(`Default category could not be created`);
       }
-      // Logger.log('defaultCategory');
 
       savedUser.categories.push(defaultCategory); //we add the category to the array of categories
       await savedUser.save({ session }); // use session here
-      // Logger.log('added default to user');
 
       await session.commitTransaction();
-      // Logger.log('commit transaction');
 
       return savedUser;
     } catch (error) {
-      // Logger.log('Caught error, aborting transaction', error);
       await session.abortTransaction();
       throw error; // don't return the error, throw it so it can be handled by your error handling middleware
     } finally {
       session.endSession();
-      // Logger.log('Ended session');
     }
   }
 

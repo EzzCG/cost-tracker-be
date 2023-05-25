@@ -1,5 +1,5 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { UpdateCategoryDto } from '../dtos/UpdateCategoryDTO';
+import { UpdateCategoryDto } from '../dtos/category.update.dto';
 import {
   CategoryRepositoryToken,
   CategoryRepository,

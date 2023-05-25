@@ -17,8 +17,8 @@ import {
 // } from './user.error-checks';
 
 import { CategoryRepository } from './category.repository';
-import { UpdateCategoryDto } from '../dtos/UpdateCategoryDTO';
-import { CreateCategoryDto } from '../dtos/CreateCategoryDTO';
+import { UpdateCategoryDto } from '../dtos/category.update.dto';
+import { CreateCategoryDto } from '../dtos/category.create.dto';
 import { Category } from '../schemas/category.schema';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';

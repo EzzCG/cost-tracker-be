@@ -1,6 +1,6 @@
 import { Expense } from 'src/components/expense/schemas/expense.schema';
-import { CreateCategoryDto } from '../dtos/CreateCategoryDTO';
-import { UpdateCategoryDto } from '../dtos/UpdateCategoryDTO';
+import { CreateCategoryDto } from '../dtos/category.create.dto';
+import { UpdateCategoryDto } from '../dtos/category.update.dto';
 import { Category } from '../schemas/category.schema';
 import { Alert } from 'src/components/alert/schemas/alert.schema.';
 import { Types } from 'mongoose';

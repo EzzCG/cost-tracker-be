@@ -36,7 +36,6 @@ import { ExpenseController } from '../expense/expense.controller';
 })
 export class AuthModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
-    //DONT FORGET TO APPLY TOKEN TO ALL ENDPOINTS
     consumer.apply(AuthMiddleware).forRoutes(
       CategoryController,
       AlertController,

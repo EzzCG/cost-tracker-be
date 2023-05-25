@@ -6,8 +6,7 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-// import { CreateAttachmentDto } from './CreateAttachmentDto';
-import { CreateCategoryDto } from 'src/components/category/dtos/CreateCategoryDTO';
+import { CreateCategoryDto } from 'src/components/category/dtos/category.create.dto';
 
 export class CreateExpenseDto {
   @IsString()

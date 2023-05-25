@@ -15,8 +15,8 @@ import {
   Logger,
   UnauthorizedException,
 } from '@nestjs/common';
-import { CreateCategoryDto } from './dtos/CreateCategoryDTO';
-import { UpdateCategoryDto } from './dtos/UpdateCategoryDTO';
+import { CreateCategoryDto } from './dtos/category.create.dto';
+import { UpdateCategoryDto } from './dtos/category.update.dto';
 import { CategoryService } from './services/category.service';
 import { Category } from './interfaces/category.interface';
 import { Response } from 'express';
@@ -65,12 +65,6 @@ export class CategoryController {
     // @Request() req: UserRequest,
   ): Promise<Category> {
     const category = await this.categoryService.findOne(id);
-    //we make sure user cant access other users categories
-    // if (category.userId != req.userId) {
-    //   throw new UnauthorizedException(
-    //     'Category ' + id + ' does not correspond to logged in user.',
-    //   );
-    // }
     return category;
   }
 
@@ -80,10 +74,6 @@ export class CategoryController {
     @Body() updateCategoryDto: UpdateCategoryDto,
     // @Request() req: UserRequest,
   ): Promise<Category> {
-    // const category = await this.findOne(id,req);
-    // if(this.findOne(id,req)){
-
-    // }
     return await this.categoryService.update(id, updateCategoryDto);
   }
 
@@ -107,12 +97,6 @@ export class CategoryController {
     @Param('id') categoryId: string,
     @Request() req: UserRequest,
   ): Promise<Alert[]> {
-    //you gotta send the user id in the endpoint to do access validation
-    // if (categoryId !== req.userId) {
-    //   throw new UnauthorizedException(
-    //     "You are not authorized to access this user's alerts.",
-    //   );
-    // }
     return await this.categoryService.findAlertsOfCategory(categoryId);
   }
 }

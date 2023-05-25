@@ -12,8 +12,4 @@ export interface User {
   role?: string;
   createdAt?: Date;
   updatedAt?: Date;
-  // monthlyReports?: MonthlyReport[];
-  // expenses?: Expense[];
-  // categories?: Category[];
-  // alerts?: Alert[];
 }

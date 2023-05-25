@@ -8,14 +8,14 @@ import {
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { UpdateExpenseDto } from 'src/components/expense/dtos/UpdateExpenseDTO';
+import { UpdateExpenseDto } from 'src/components/expense/dtos/expense.update.dto';
 import { Expense } from 'src/components/expense/schemas/expense.schema';
 import { Alert } from '../schemas/alert.schema.';
 import {
   CategoryRepositoryToken,
   CategoryRepository,
 } from 'src/components/category/repos/category.repository';
-import { CreateAlertDto } from '../dtos/CreateAlertDTO';
+import { CreateAlertDto } from '../dtos/alert.create.dto';
 import {
   UserRepository,
   UserRepositoryToken,

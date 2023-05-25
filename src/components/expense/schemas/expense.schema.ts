@@ -21,8 +21,5 @@ export class Expense extends Document {
 
 export const ExpenseSchema = SchemaFactory.createForClass(Expense);
 
-//   @Prop({ type: Schema.Types.ObjectId, ref: 'Category' })
-//   category: string;
-
 //   @Prop({ type: Schema.Types.ObjectId, ref: 'Attachment' })
 //   attachment: string;
