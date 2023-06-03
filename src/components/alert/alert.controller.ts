@@ -15,9 +15,11 @@ import {
   Logger,
   Inject,
   forwardRef,
+  UsePipes,
+  ValidationPipe,
 } from '@nestjs/common';
-import { CreateAlertDto } from './dtos/CreateAlertDTO';
-import { UpdateAlertDto } from './dtos/UpdateAlertDTO';
+import { CreateAlertDto } from './dtos/alert.create.dto';
+import { UpdateAlertDto } from './dtos/alert.update.dto';
 import { AlertService } from './services/alert.service';
 import { Alert } from './schemas/alert.schema.';
 import { Response } from 'express';
@@ -25,21 +27,14 @@ import { JwtAuthGuard } from 'src/shared/guards/jwt-auth.guard';
 import { AuthMiddleware } from '../auth/middleware/auth.middleware';
 import { Request } from '@nestjs/common';
 import { UserRequest } from '../auth/middleware/user-request.interface';
-import {
-  CategoryRepository,
-  CategoryRepositoryToken,
-} from '../category/repos/category.repository';
 import { AuthGuard } from './guards/authguard';
 
 @Controller('alert')
 export class AlertController {
-  constructor(
-    private readonly alertService: AlertService,
-    @Inject(forwardRef(() => CategoryRepositoryToken))
-    private categoryRepository: CategoryRepository,
-  ) {}
+  constructor(private readonly alertService: AlertService) {}
 
   @Post()
+  @UsePipes(new ValidationPipe({ whitelist: true }))
   async create(
     @Body() createAlertDto: CreateAlertDto,
     @Request() req: UserRequest,

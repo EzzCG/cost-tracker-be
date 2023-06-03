@@ -15,8 +15,8 @@ import {
   Logger,
   UnauthorizedException,
 } from '@nestjs/common';
-import { CreateCategoryDto } from './dtos/CreateCategoryDTO';
-import { UpdateCategoryDto } from './dtos/UpdateCategoryDTO';
+import { CreateCategoryDto } from './dtos/category.create.dto';
+import { UpdateCategoryDto } from './dtos/category.update.dto';
 import { CategoryService } from './services/category.service';
 import { Category } from './interfaces/category.interface';
 import { Response } from 'express';
@@ -24,17 +24,14 @@ import { JwtAuthGuard } from 'src/shared/guards/jwt-auth.guard';
 import { AuthMiddleware } from '../auth/middleware/auth.middleware';
 import { Request } from '@nestjs/common';
 import { UserRequest } from '../auth/middleware/user-request.interface';
-import { Expense } from '../expense/interfaces/expense.interface';
+import { Expense } from '../expense/schemas/expense.schema';
 import { Alert } from '../alert/schemas/alert.schema.';
 import { ExpenseService } from '../expense/services/expense.service';
 import { AuthGuard } from './guards/authguard';
 
 @Controller('category')
 export class CategoryController {
-  constructor(
-    private readonly categoryService: CategoryService,
-    private readonly expenseService: ExpenseService,
-  ) {}
+  constructor(private readonly categoryService: CategoryService) {}
 
   @Post()
   async create(
@@ -65,12 +62,6 @@ export class CategoryController {
     // @Request() req: UserRequest,
   ): Promise<Category> {
     const category = await this.categoryService.findOne(id);
-    //we make sure user cant access other users categories
-    // if (category.userId != req.userId) {
-    //   throw new UnauthorizedException(
-    //     'Category ' + id + ' does not correspond to logged in user.',
-    //   );
-    // }
     return category;
   }
 
@@ -80,10 +71,6 @@ export class CategoryController {
     @Body() updateCategoryDto: UpdateCategoryDto,
     // @Request() req: UserRequest,
   ): Promise<Category> {
-    // const category = await this.findOne(id,req);
-    // if(this.findOne(id,req)){
-
-    // }
     return await this.categoryService.update(id, updateCategoryDto);
   }
 
@@ -95,11 +82,12 @@ export class CategoryController {
     return await this.categoryService.delete(categoryId, req.userId);
   }
 
-  @Get('expenses/:id')
-  async findAllExpensesOfCategory(
+  @Get(':id/expenses')
+  async findExpensesOfCategory(
     @Param('id') categoryId: string,
+    @Request() req: UserRequest,
   ): Promise<Expense[]> {
-    return await this.expenseService.findAllExpensesOfCategory(categoryId);
+    return await this.categoryService.findExpensesOfCategory(categoryId);
   }
 
   @Get(':id/alerts')
@@ -107,12 +95,6 @@ export class CategoryController {
     @Param('id') categoryId: string,
     @Request() req: UserRequest,
   ): Promise<Alert[]> {
-    //you gotta send the user id in the endpoint to do access validation
-    // if (categoryId !== req.userId) {
-    //   throw new UnauthorizedException(
-    //     "You are not authorized to access this user's alerts.",
-    //   );
-    // }
     return await this.categoryService.findAlertsOfCategory(categoryId);
   }
 }

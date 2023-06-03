@@ -18,8 +18,13 @@ export class Category extends Document {
   @Prop({ required: true })
   userId: string;
 
+  @Prop({ default: 0 }) current_value: number;
+
   @Prop({ type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Alert' }] })
   alerts: Alert[];
+
+  @Prop({ type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Expense' }] })
+  expenses: Expense[];
 }
 
 export const CategorySchema = SchemaFactory.createForClass(Category);

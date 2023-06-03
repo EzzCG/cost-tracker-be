@@ -20,10 +20,6 @@ export class CreateAlertDto {
   @IsNotEmpty()
   amount: number;
 
-  @IsNumber()
-  @IsNotEmpty()
-  frequency: number;
-
   @IsString()
   @IsNotEmpty()
   message: string;

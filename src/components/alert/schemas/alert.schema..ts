@@ -1,4 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { IsIn } from 'class-validator';
 import { Document } from 'mongoose';
 
 @Schema()
@@ -7,16 +8,20 @@ export class Alert extends Document {
   name: string;
 
   @Prop({ required: true })
+  @IsIn(['greater than', 'less than', 'equal to'])
   condition: string;
 
   @Prop({ required: true })
   amount: number;
 
   @Prop({ required: true })
-  frequency: number;
-
-  @Prop({ required: true })
   message: string;
+
+  @Prop({ default: null })
+  triggered_at: Date;
+
+  @Prop({ default: [] })
+  triggered_history: Date[];
 
   @Prop({ required: true, default: 'active' })
   status: string;

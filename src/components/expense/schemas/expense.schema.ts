@@ -1,5 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
+import mongoose, { Document } from 'mongoose';
+import { Attachment } from 'src/components/attachment/schemas/attachment.schema';
 
 @Schema()
 export class Expense extends Document {
@@ -9,20 +10,17 @@ export class Expense extends Document {
   @Prop({ required: true })
   amount: number;
 
-  @Prop({ required: true })
-  date: string;
+  @Prop({ required: true, type: Date }) date: Date;
 
   @Prop({ required: true })
   userId: string;
 
   @Prop({ required: true })
   categoryId: string;
+
+  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'Attachment' })
+  attachment: Attachment;
 }
 
 export const ExpenseSchema = SchemaFactory.createForClass(Expense);
-
-//   @Prop({ type: Schema.Types.ObjectId, ref: 'Category' })
-//   category: string;
-
-//   @Prop({ type: Schema.Types.ObjectId, ref: 'Attachment' })
-//   attachment: string;
+ExpenseSchema.index({ attachment: 1 }, { unique: true, sparse: true }); //skips attachment with null values which means null can't be unique

@@ -9,12 +9,13 @@ import {
   UseGuards,
   Request,
 } from '@nestjs/common';
-import { CreateExpenseDto } from './dtos/CreateExpenseDTO';
-import { UpdateExpenseDto } from './dtos/UpdateExpenseDTO';
-import { Expense } from './interfaces/expense.interface';
+import { CreateExpenseDto } from './dtos/expense.create.dto';
+import { UpdateExpenseDto } from './dtos/expense.update.dto';
+import { Expense } from './schemas/expense.schema';
 import { ExpenseService } from './services/expense.service';
 import { UserRequest } from '../auth/middleware/user-request.interface';
 import { JwtAuthGuard } from 'src/shared/guards/jwt-auth.guard';
+import { Attachment } from '../attachment/schemas/attachment.schema';
 
 @Controller('expense')
 export class ExpenseController {
@@ -25,11 +26,7 @@ export class ExpenseController {
     @Body() createExpenseDto: CreateExpenseDto,
     @Request() req: UserRequest,
   ): Promise<Expense | any> {
-    const createdExpense = await this.expenseService.create(
-      createExpenseDto,
-      req.userId,
-    );
-    return createdExpense;
+    return await this.expenseService.create(createExpenseDto, req.userId);
   }
 
   @UseGuards(JwtAuthGuard)
@@ -54,5 +51,11 @@ export class ExpenseController {
   @Delete(':id')
   async delete(@Param('id') id: string): Promise<Expense> {
     return await this.expenseService.delete(id);
+  }
+  @Get('attachment/:id')
+  async findAttachmentOfExpense(
+    @Param('id') expenseId: string,
+  ): Promise<Attachment> {
+    return await this.expenseService.findAttachmentOfExpense(expenseId);
   }
 }

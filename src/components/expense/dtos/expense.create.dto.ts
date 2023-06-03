@@ -2,12 +2,12 @@ import {
   IsNotEmpty,
   IsNumber,
   IsOptional,
+  IsDate,
   IsString,
   ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-// import { CreateAttachmentDto } from './CreateAttachmentDto';
-import { CreateCategoryDto } from 'src/components/category/dtos/CreateCategoryDTO';
+import { CreateCategoryDto } from 'src/components/category/dtos/category.create.dto';
 
 export class CreateExpenseDto {
   @IsString()
@@ -24,14 +24,10 @@ export class CreateExpenseDto {
 
   @IsString()
   @IsNotEmpty()
-  readonly categoryId: string;
+  category: string;
 }
 
 //   @IsOptional()
 //   @Type(() => CreateAttachmentDto)
 //   @ValidateNested()
 //   attachment?: CreateAttachmentDto;
-
-//   @Type(() => CreateCategoryDto)
-//   @ValidateNested()
-//   category: CreateCategoryDto;

@@ -18,7 +18,6 @@ export class AuthService {
     this.logger.log(`password passed: ${pass}`);
 
     if (user && bcrypt.compareSync(pass, user.password)) {
-      // if (user && user.password === pass) {
       const { password, ...result } = user; // Convert Mongoose document to a plain object
       this.logger.log(`User validated: ${JSON.stringify(result)}`);
 

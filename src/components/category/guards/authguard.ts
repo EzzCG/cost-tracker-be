@@ -17,13 +17,10 @@ export class AuthGuard implements CanActivate {
     const request = context.switchToHttp().getRequest();
 
     const categoryParam = request.params['id'];
-    // Logger.log('categoryParam :' + categoryParam);
 
     const req: UserRequest = request;
-    // Logger.log('userId :' + req.userId);
 
     const category = await this.categoryService.findOne(categoryParam);
-    // Logger.log('category.userId :' + category.userId);
 
     if (category.userId !== req.userId) {
       throw new ForbiddenException(
