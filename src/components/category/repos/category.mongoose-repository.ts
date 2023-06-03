@@ -9,13 +9,7 @@ import {
   UseGuards,
   forwardRef,
 } from '@nestjs/common';
-// import {
-//   checkIdType,
-//   checkUserFound,
-//   checkEmailFound,
-//   hashPw,
-// } from './user.error-checks';
-
+import * as cron from 'node-cron';
 import { CategoryRepository } from './category.repository';
 import { UpdateCategoryDto } from '../dtos/category.update.dto';
 import { CreateCategoryDto } from '../dtos/category.create.dto';
@@ -45,7 +39,16 @@ export class MongooseCategoryRepository implements CategoryRepository {
     private userRepository: UserRepository,
     @Inject(forwardRef(() => AlertService))
     private alertService: AlertService,
-  ) {}
+  ) {
+    cron.schedule('* * 1 * *', this.resetAllCategoryValues.bind(this));
+  }
+  //a function that  resets all the categories current_value to 0
+  async resetAllCategoryValues(): Promise<void> {
+    const categories = await this.categoryModel.updateMany(
+      {},
+      { $set: { current_value: 0 } },
+    );
+  }
 
   async create(categoryDto: Category): Promise<Category> {
     const session = await this.categoryModel.db.startSession(); //we start a session here of dif queries
@@ -273,16 +276,29 @@ export class MongooseCategoryRepository implements CategoryRepository {
   async addExpenseToCategory(
     categoryId: string,
     expenseId: Types.ObjectId,
+    amount: number,
     session: any,
   ): Promise<void> {
+    Logger.log('categoryId ', categoryId);
+    Logger.log('expenseId ', expenseId);
+    Logger.log('amount ', amount);
     const category = await this.categoryModel
-      .findByIdAndUpdate(categoryId, { $push: { expenses: expenseId } })
+      .findByIdAndUpdate(categoryId, {
+        $push: { expenses: expenseId },
+        $inc: { current_value: amount },
+      })
       .session(session)
       .exec();
 
     if (!category) {
       throw new NotFoundException(`Category with ID '${categoryId}' not found`);
     }
+
+    this.alertService.updateTriggeredAtDate(
+      categoryId,
+      category.current_value,
+      session,
+    );
   }
 
   async findAlertsOfCategory(categoryId: string): Promise<Alert[]> {

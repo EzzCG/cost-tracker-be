@@ -21,6 +21,7 @@ import {
   UserRepositoryToken,
 } from 'src/components/user/repos/user.repository';
 import { UpdateAlertDto } from '../dtos/alert.update.dto';
+import * as cron from 'node-cron';
 
 @Injectable()
 export class AlertService {
@@ -30,8 +31,16 @@ export class AlertService {
     private userRepository: UserRepository,
     @Inject(forwardRef(() => CategoryRepositoryToken))
     private categoryRepository: CategoryRepository,
-  ) {}
-
+  ) {
+    cron.schedule('* * 1 * *', this.resetAllTriggeredAt.bind(this));
+  }
+  //a function that  resets all the alerts triggered_at to 0
+  async resetAllTriggeredAt(): Promise<void> {
+    const alerts = await this.alertModel.updateMany(
+      {},
+      { $set: { triggered_at: null } },
+    );
+  }
   async create(createAlertDto: CreateAlertDto, userId: string): Promise<Alert> {
     const session = await this.alertModel.db.startSession(); //we start a session here of dif queries
     session.startTransaction(); //incase of an error, all queries, won't take effect
@@ -55,13 +64,13 @@ export class AlertService {
       const createdAlert = new this.alertModel(alert);
       await this.userRepository.addAlertToUser(
         userId,
-        new Types.ObjectId(createdAlert._id),
+        new Types.ObjectId(createdAlert.id),
         session,
       ); // Method which adds the category ID to the user who created it
 
       await this.categoryRepository.addAlertToCategory(
         alert.categoryId,
-        new Types.ObjectId(createdAlert._id),
+        new Types.ObjectId(createdAlert.id),
         session,
       );
 
@@ -111,6 +120,62 @@ export class AlertService {
     }
 
     return alert;
+  }
+
+  //function that updates the triggered date
+  async updateTriggeredAtDate(
+    categoryId: string,
+    catgCurrentValue: number,
+    session: any,
+  ): Promise<void> {
+    // Find all alerts with matching categoryId
+    const alerts = await this.alertModel
+      .find({ categoryId })
+      .session(session)
+      .exec();
+
+    Logger.log('alerts', alerts);
+    if (!alerts) {
+      // No alerts found for this categoryId
+      return;
+    }
+
+    // Iterate over each alert and update if necessary
+    for (let alert of alerts) {
+      let shouldUpdate = false;
+      switch (alert.condition) {
+        case 'greater than':
+          Logger.log('alert', alert.name);
+          if (catgCurrentValue > alert.amount) {
+            Logger.log('catgCurrentValue', catgCurrentValue);
+            Logger.log('alert.amount', alert.amount);
+
+            shouldUpdate = true;
+          }
+          break;
+        case 'less than':
+          if (catgCurrentValue < alert.amount) {
+            shouldUpdate = true;
+          }
+          break;
+        case 'equal to':
+          if (catgCurrentValue == alert.amount) {
+            shouldUpdate = true;
+          }
+          break;
+        default:
+          throw new Error(
+            `Unexpected condition value '${alert.condition}' for alert with ID '${alert._id}'`,
+          );
+      }
+
+      if (shouldUpdate) {
+        const now = new Date();
+        alert.triggered_at = now;
+        alert.triggered_history.push(now);
+        await alert.save({ session });
+      }
+    }
   }
 
   async delete(id: string): Promise<Alert> {
@@ -170,7 +235,7 @@ export class AlertService {
       .session(session)
       .exec();
 
-    const alertIds = alerts.map((alert) => alert._id);
+    const alertIds = alerts.map((alert) => alert.id);
     await this.alertModel
       .deleteMany({ categoryId: catgId })
       .session(session)

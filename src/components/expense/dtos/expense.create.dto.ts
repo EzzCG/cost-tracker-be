@@ -2,6 +2,7 @@ import {
   IsNotEmpty,
   IsNumber,
   IsOptional,
+  IsDate,
   IsString,
   ValidateNested,
 } from 'class-validator';
@@ -30,7 +31,3 @@ export class CreateExpenseDto {
 //   @Type(() => CreateAttachmentDto)
 //   @ValidateNested()
 //   attachment?: CreateAttachmentDto;
-
-//   @Type(() => CreateCategoryDto)
-//   @ValidateNested()
-//   category: CreateCategoryDto;

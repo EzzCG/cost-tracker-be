@@ -24,7 +24,7 @@ import { JwtAuthGuard } from 'src/shared/guards/jwt-auth.guard';
 import { AuthMiddleware } from '../auth/middleware/auth.middleware';
 import { Request } from '@nestjs/common';
 import { UserRequest } from '../auth/middleware/user-request.interface';
-import { Expense } from '../expense/interfaces/expense.interface';
+import { Expense } from '../expense/schemas/expense.schema';
 import { Alert } from '../alert/schemas/alert.schema.';
 import { ExpenseService } from '../expense/services/expense.service';
 import { AuthGuard } from './guards/authguard';

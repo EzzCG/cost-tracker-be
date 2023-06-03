@@ -15,6 +15,8 @@ import {
   Logger,
   Inject,
   forwardRef,
+  UsePipes,
+  ValidationPipe,
 } from '@nestjs/common';
 import { CreateAlertDto } from './dtos/alert.create.dto';
 import { UpdateAlertDto } from './dtos/alert.update.dto';
@@ -32,6 +34,7 @@ export class AlertController {
   constructor(private readonly alertService: AlertService) {}
 
   @Post()
+  @UsePipes(new ValidationPipe({ whitelist: true }))
   async create(
     @Body() createAlertDto: CreateAlertDto,
     @Request() req: UserRequest,

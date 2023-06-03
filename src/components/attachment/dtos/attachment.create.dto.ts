@@ -16,4 +16,8 @@ export class CreateAttachmentDto {
   @IsString()
   @IsNotEmpty()
   storageLocation: string;
+
+  @IsString()
+  @IsNotEmpty()
+  expenseId: string;
 }

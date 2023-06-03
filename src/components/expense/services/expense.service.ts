@@ -4,6 +4,7 @@ import {
   NotFoundException,
   forwardRef,
   InternalServerErrorException,
+  Logger,
 } from '@nestjs/common';
 
 import { Expense } from '../schemas/expense.schema';
@@ -19,6 +20,8 @@ import {
   CategoryRepository,
   CategoryRepositoryToken,
 } from 'src/components/category/repos/category.repository';
+import { Attachment } from 'src/components/attachment/schemas/attachment.schema';
+import { AttachmentService } from 'src/components/attachment/services/attachment.service';
 
 @Injectable()
 export class ExpenseService {
@@ -27,6 +30,8 @@ export class ExpenseService {
     @Inject(UserRepositoryToken) private userRepository: UserRepository,
     @Inject(forwardRef(() => CategoryRepositoryToken))
     private categoryRepository: CategoryRepository,
+    @Inject(forwardRef(() => AttachmentService))
+    private attachmentService: AttachmentService,
   ) {}
 
   async create(
@@ -44,8 +49,12 @@ export class ExpenseService {
         session,
       );
       delete createExpenseDto.category;
+
+      const dateInstance = new Date(createExpenseDto.date);
+      delete createExpenseDto.date;
       const expense = {
         ...createExpenseDto,
+        date: dateInstance,
         userId: userId,
         categoryId: categId,
       };
@@ -53,13 +62,14 @@ export class ExpenseService {
 
       await this.userRepository.addExpenseToUser(
         userId,
-        new Types.ObjectId(createdExpense._id),
+        new Types.ObjectId(createdExpense.id),
         session,
       ); // Method which adds the category ID to the user who created it
 
       await this.categoryRepository.addExpenseToCategory(
         expense.categoryId,
-        new Types.ObjectId(createdExpense._id),
+        new Types.ObjectId(createdExpense.id),
+        createdExpense.amount,
         session,
       );
 
@@ -144,6 +154,11 @@ export class ExpenseService {
         session,
       );
 
+      await this.attachmentService.deleteAttachmentOfExpense(
+        deletedExpense.attachment.id,
+        session,
+      );
+
       await session.commitTransaction();
       return deletedExpense;
     } catch (error) {
@@ -163,5 +178,61 @@ export class ExpenseService {
       .deleteMany({ userId: userId })
       .session(session)
       .exec();
+  }
+
+  async removeAttachmentFromExpense(
+    expenseId: string,
+    session: any,
+  ): Promise<void> {
+    const expense = await this.expenseModel
+      .findById(expenseId)
+      .session(session);
+    if (!expense) {
+      throw new NotFoundException(`Expense with id '${expenseId}' not found`);
+    }
+
+    expense.attachment = null;
+    await expense.save();
+  }
+
+  async addAttachmentToExpense(
+    expenseId: string,
+    attachment: Attachment,
+    session: any,
+  ): Promise<void> {
+    const expense = await this.expenseModel
+      .findById(expenseId)
+      .session(session);
+
+    if (!expense) {
+      throw new NotFoundException(`Expense with id '${expenseId}' not found`);
+    }
+
+    expense.attachment = attachment;
+    await expense.save();
+  }
+
+  async findAttachmentOfExpense(expenseId: string): Promise<Attachment> {
+    const expense2 = await this.expenseModel.findById(expenseId).exec();
+    if (!expense2) {
+      throw new NotFoundException(`Expense with ID '${expenseId}' not found`);
+    }
+    expense2.populate('attachment');
+
+    const expense = await this.expenseModel
+      .findById(expenseId)
+      .populate('attachment')
+      .exec();
+
+    if (!expense) {
+      throw new NotFoundException(`Expense with id '${expenseId}' not found`);
+    }
+
+    if (!expense.attachment) {
+      throw new NotFoundException(
+        `Expense with id ${expenseId} doesn't have an attachment`,
+      );
+    }
+    return expense.attachment;
   }
 }

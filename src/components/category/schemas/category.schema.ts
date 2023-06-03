@@ -18,6 +18,8 @@ export class Category extends Document {
   @Prop({ required: true })
   userId: string;
 
+  @Prop({ default: 0 }) current_value: number;
+
   @Prop({ type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Alert' }] })
   alerts: Alert[];
 
