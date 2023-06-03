@@ -277,16 +277,32 @@ export class MongooseCategoryRepository implements CategoryRepository {
     categoryId: string,
     expenseId: Types.ObjectId,
     amount: number,
+    date: Date,
     session: any,
   ): Promise<void> {
     Logger.log('categoryId ', categoryId);
     Logger.log('expenseId ', expenseId);
     Logger.log('amount ', amount);
+
+    const currentDate = new Date(); //today's date
+    let updateObject = {
+      $push: { expenses: expenseId },
+    };
+
+    let updated: boolean = false;
+    let added = 0;
+    // Only increment current_value if the year and month are the same
+    if (
+      currentDate.getFullYear() === date.getFullYear() &&
+      currentDate.getMonth() === date.getMonth()
+    ) {
+      updateObject['$inc'] = { current_value: amount };
+      added = amount;
+      updated = true;
+    }
+
     const category = await this.categoryModel
-      .findByIdAndUpdate(categoryId, {
-        $push: { expenses: expenseId },
-        $inc: { current_value: amount },
-      })
+      .findByIdAndUpdate(categoryId, updateObject)
       .session(session)
       .exec();
 
@@ -294,11 +310,14 @@ export class MongooseCategoryRepository implements CategoryRepository {
       throw new NotFoundException(`Category with ID '${categoryId}' not found`);
     }
 
-    this.alertService.updateTriggeredAtDate(
-      categoryId,
-      category.current_value,
-      session,
-    );
+    if (updated) {
+      await this.alertService.updateTriggeredAtDate(
+        categoryId,
+        category.current_value,
+        added,
+        session,
+      );
+    }
   }
 
   async findAlertsOfCategory(categoryId: string): Promise<Alert[]> {

@@ -33,6 +33,7 @@ export interface CategoryRepository {
     categoryId: string,
     expenseId: Types.ObjectId,
     amount: number,
+    date: Date,
     session: any,
   ): Promise<void>;
   findAlertsOfCategory(categoryId: string): Promise<Alert[]>;

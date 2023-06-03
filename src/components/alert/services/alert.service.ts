@@ -38,7 +38,7 @@ export class AlertService {
   async resetAllTriggeredAt(): Promise<void> {
     const alerts = await this.alertModel.updateMany(
       {},
-      { $set: { triggered_at: null } },
+      { $set: { triggered_at: null, status: 'Active' } },
     );
   }
   async create(createAlertDto: CreateAlertDto, userId: string): Promise<Alert> {
@@ -106,6 +106,58 @@ export class AlertService {
     return alert;
   }
 
+  async getAlerts(
+    month: number,
+    year: number,
+    userId: string,
+  ): Promise<Expense[]> {
+    const startDate = new Date(month + '/01/' + year);
+    const endMonth = month == 12 ? 1 : month + 1; //if conditon incase of dec
+    const endDate = new Date(endMonth + '/01/' + year);
+
+    // In MongoDB, months are 0-indexed, so January is 0, February is 1, etc. Therefore, subtract 1 from month for the startDate.
+    // Also, the endDate should be the start of the next month, so if the month is 12 (December), reset it to 0 (January) and increment the year by 1.
+    // If the month is not December, simply increment it by 1.
+
+    const alerts = await this.alertModel.aggregate([
+      {
+        $match: {
+          userId: userId,
+          $or: [
+            // Either the alert was triggered within the month, or it is still active
+            { triggered_at: { $gte: startDate, $lt: endDate } },
+            { status: 'Active' },
+          ],
+        },
+      },
+      {
+        $lookup: {
+          from: 'categories',
+          let: { categoryId: { $toObjectId: '$categoryId' } },
+          pipeline: [{ $match: { $expr: { $eq: ['$_id', '$$categoryId'] } } }],
+          as: 'categoryData',
+        },
+      },
+      {
+        $unwind: '$categoryData',
+      },
+      {
+        $project: {
+          _id: 0,
+          alert: '$name',
+          category: '$categoryData.name',
+          condition: '$condition',
+          status: '$status',
+          date: {
+            $dateToString: { format: '%d-%m-%Y', date: '$triggered_at' },
+          },
+        },
+      },
+    ]);
+
+    return alerts;
+  }
+
   async update(id: string, alertDto: UpdateAlertDto): Promise<Alert> {
     let updatedAlert: any = { ...alertDto };
     const alert = await this.alertModel
@@ -126,6 +178,7 @@ export class AlertService {
   async updateTriggeredAtDate(
     categoryId: string,
     catgCurrentValue: number,
+    added: number,
     session: any,
   ): Promise<void> {
     // Find all alerts with matching categoryId
@@ -140,26 +193,31 @@ export class AlertService {
       return;
     }
 
+    let finalValue: number;
+    if (added != 0) {
+      finalValue = catgCurrentValue + added;
+    }
+
     // Iterate over each alert and update if necessary
     for (let alert of alerts) {
       let shouldUpdate = false;
       switch (alert.condition) {
         case 'greater than':
           Logger.log('alert', alert.name);
-          if (catgCurrentValue > alert.amount) {
-            Logger.log('catgCurrentValue', catgCurrentValue);
-            Logger.log('alert.amount', alert.amount);
 
+          Logger.log('finalValue', finalValue);
+          Logger.log('alert.amount', alert.amount);
+          if (finalValue > alert.amount) {
             shouldUpdate = true;
           }
           break;
         case 'less than':
-          if (catgCurrentValue < alert.amount) {
+          if (finalValue < alert.amount) {
             shouldUpdate = true;
           }
           break;
         case 'equal to':
-          if (catgCurrentValue == alert.amount) {
+          if (finalValue == alert.amount) {
             shouldUpdate = true;
           }
           break;
@@ -173,6 +231,9 @@ export class AlertService {
         const now = new Date();
         alert.triggered_at = now;
         alert.triggered_history.push(now);
+        if (added != 0) {
+          alert.status = 'Triggered';
+        }
         await alert.save({ session });
       }
     }

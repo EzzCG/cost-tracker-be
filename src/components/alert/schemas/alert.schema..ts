@@ -23,7 +23,7 @@ export class Alert extends Document {
   @Prop({ default: [] })
   triggered_history: Date[];
 
-  @Prop({ required: true, default: 'active' })
+  @Prop({ required: true, default: 'Active' })
   status: string;
   @Prop({ required: true })
   userId: string;

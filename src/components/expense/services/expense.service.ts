@@ -70,6 +70,7 @@ export class ExpenseService {
         expense.categoryId,
         new Types.ObjectId(createdExpense.id),
         createdExpense.amount,
+        createdExpense.date,
         session,
       );
 
@@ -98,6 +99,109 @@ export class ExpenseService {
       throw new NotFoundException(`Expense with ID '${id}' not found`);
     }
     return expense;
+  }
+
+  async getOverview(
+    month: number,
+    year: number,
+    userId: string,
+  ): Promise<Expense[]> {
+    const startDate = new Date(month + '/01/' + year);
+    const endMonth = month == 12 ? 1 : month + 1; //if conditon incase of dec
+    const endDate = new Date(endMonth + '/01/' + year);
+
+    const expenses = await this.expenseModel.aggregate([
+      {
+        $match: {
+          userId: userId,
+          date: { $gte: startDate, $lt: endDate },
+        },
+      },
+      {
+        $lookup: {
+          from: 'categories',
+          let: { categoryId: { $toObjectId: '$categoryId' } },
+          pipeline: [{ $match: { $expr: { $eq: ['$_id', '$$categoryId'] } } }],
+          as: 'categoryData',
+        },
+      },
+      {
+        $unwind: '$categoryData',
+      },
+      {
+        $project: {
+          _id: 0,
+          date: { $dateToString: { format: '%d-%m-%Y', date: '$date' } },
+          concept: '$concept',
+          category: '$categoryData.name',
+          totalAmount: '$amount',
+        },
+      },
+    ]);
+
+    return expenses;
+  }
+
+  async getCategories(
+    month: number,
+    year: number,
+    userId: string,
+  ): Promise<Expense[]> {
+    const startDate = new Date(month + '/01/' + year);
+    const endMonth = month == 12 ? 1 : month + 1; //if conditon incase of dec
+    const endDate = new Date(endMonth + '/01/' + year);
+
+    const expenses = await this.expenseModel.aggregate([
+      {
+        $match: {
+          userId: userId,
+          date: { $gte: startDate, $lt: endDate },
+        },
+      },
+      {
+        $lookup: {
+          from: 'categories',
+          let: { categoryId: { $toObjectId: '$categoryId' } },
+          pipeline: [{ $match: { $expr: { $eq: ['$_id', '$$categoryId'] } } }],
+          as: 'categoryData',
+        },
+      },
+      {
+        $unwind: '$categoryData',
+      },
+      {
+        $group: {
+          _id: '$categoryData.name',
+          total: { $sum: '$amount' },
+          min: { $first: '$categoryData.minValue' },
+          max: { $first: '$categoryData.maxValue' },
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          category: '$_id',
+          totalAmount: '$total',
+          min: '$min',
+          max: '$max',
+          status: {
+            $cond: {
+              if: { $gt: ['$total', '$max'] },
+              then: 'Exceeding',
+              else: {
+                $cond: {
+                  if: { $lt: ['$total', '$min'] },
+                  then: 'Saving',
+                  else: 'Within Limit',
+                },
+              },
+            },
+          },
+        },
+      },
+    ]);
+
+    return expenses;
   }
 
   async update(id: string, expenseDto: UpdateExpenseDto): Promise<Expense> {
@@ -130,6 +234,7 @@ export class ExpenseService {
   }
 
   async delete(id: string): Promise<Expense> {
+    Logger.log('id: ', id);
     const session = await this.expenseModel.db.startSession(); //we start a session here of dif queries
     session.startTransaction(); //incase of an error, all queries, won't take effect
 
@@ -141,6 +246,7 @@ export class ExpenseService {
       if (!deletedExpense) {
         throw new NotFoundException(`Expense with ID '${id}' not found`);
       }
+      Logger.log('deletedExpense: ', deletedExpense);
 
       await this.userRepository.deleteExpenseFromUser(
         deletedExpense.userId,
@@ -154,10 +260,13 @@ export class ExpenseService {
         session,
       );
 
-      await this.attachmentService.deleteAttachmentOfExpense(
-        deletedExpense.attachment.id,
-        session,
-      );
+      //if there's an attachment, we delete it too
+      if (deletedExpense.attachment) {
+        await this.attachmentService.deleteAttachmentOfExpense(
+          deletedExpense.attachment.id,
+          session,
+        );
+      }
 
       await session.commitTransaction();
       return deletedExpense;

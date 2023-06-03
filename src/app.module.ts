@@ -12,6 +12,7 @@ import { AlertModule } from './components/alert/alert.module';
 import { AttachmentModule } from './components/attachment/attachment.module';
 @Module({
   imports: [
+    ReportModule,
     AttachmentModule,
     UserModule,
     AuthModule,

@@ -9,8 +9,14 @@ import { Type } from 'class-transformer';
 //   import { CreateExpenseDto } from './CreateExpenseDto';
 
 export class CreateReportDto {
+  @IsNumber()
+  @IsNotEmpty()
+  month: number;
 
-  
+  @IsNumber()
+  @IsNotEmpty()
+  year: number;
+
   // @IsNumber()
   // @IsNotEmpty()
   // totExpenses: number;

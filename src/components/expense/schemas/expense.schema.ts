@@ -15,7 +15,11 @@ export class Expense extends Document {
   @Prop({ required: true })
   userId: string;
 
-  @Prop({ required: true })
+  @Prop({
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Category',
+    required: true,
+  })
   categoryId: string;
 
   @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'Attachment' })
