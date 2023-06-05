@@ -74,9 +74,12 @@ export class AlertService {
         new Types.ObjectId(createdAlert.id),
         session,
       );
-
       await createdAlert.save({ session });
       await session.commitTransaction();
+
+      const catg = await this.categoryRepository.findOne(categId);
+      await this.reevaluateAlerts(catg, catg.current_value, session); //we check if anything triggers the alert immediately
+
       return createdAlert;
     } catch (error) {
       await session.abortTransaction();
@@ -147,7 +150,9 @@ export class AlertService {
           _id: 0,
           alert: '$name',
           category: '$categoryData.name',
-          condition: '$condition',
+          condition: {
+            $concat: ['Spending ', '$condition', ' ', { $toString: '$amount' }],
+          },
           status: '$status',
           date: {
             $dateToString: { format: '%d-%m-%Y', date: '$triggered_at' },
@@ -225,189 +230,6 @@ export class AlertService {
         }
 
         await alert.save({ session });
-      }
-    }
-  }
-
-  //function that adds  the triggered date incase of add expense
-  async addTriggeredAtDate(
-    categoryId: string,
-    catgCurrentValue: number,
-    added: number,
-    session: any,
-  ): Promise<void> {
-    // Find all alerts with matching categoryId
-    const alerts = await this.alertModel
-      .find({ categoryId })
-      .session(session)
-      .exec();
-
-    Logger.log('alerts', alerts);
-    if (!alerts) {
-      // No alerts found for this categoryId
-      return;
-    }
-
-    let finalValue: number;
-    if (added != 0) {
-      finalValue = catgCurrentValue + added;
-    }
-
-    // Iterate over each alert and update if necessary
-    for (let alert of alerts) {
-      if (alert.status != 'Triggered') {
-        let shouldUpdate = false;
-        switch (alert.condition) {
-          case 'greater than':
-            Logger.log('alert', alert.name);
-
-            Logger.log('finalValue', finalValue);
-            Logger.log('alert.amount', alert.amount);
-            if (finalValue > alert.amount) {
-              shouldUpdate = true;
-            }
-            break;
-          case 'less than':
-            if (finalValue < alert.amount) {
-              shouldUpdate = true;
-            }
-            break;
-          case 'equal to':
-            if (finalValue == alert.amount) {
-              shouldUpdate = true;
-            }
-            break;
-          default:
-            throw new Error(
-              `Unexpected condition value '${alert.condition}' for alert with ID '${alert._id}'`,
-            );
-        }
-
-        if (shouldUpdate) {
-          const now = new Date();
-          alert.triggered_at = now;
-          alert.triggered_history.push(now);
-          if (added != 0) {
-            alert.status = 'Triggered';
-          }
-          await alert.save({ session });
-        }
-      }
-    }
-  }
-
-  async removeTriggeredAtDate(
-    categoryId: string,
-    catgCurrentValue: number,
-    deduct: number,
-    session: any,
-  ): Promise<void> {
-    // Find all alerts with matching categoryId
-    const alerts = await this.alertModel
-      .find({ categoryId })
-      .session(session)
-      .exec();
-
-    if (!alerts) {
-      // No alerts found for this categoryId
-      return;
-    }
-
-    let finalValue: number;
-    if (deduct != 0) {
-      finalValue = catgCurrentValue - deduct;
-    }
-
-    // Iterate over each alert and update if necessary
-    for (let alert of alerts) {
-      let shouldUpdate = false;
-      if (alert.status == 'Triggered') {
-        switch (alert.condition) {
-          case 'greater than':
-            if (finalValue <= alert.amount) {
-              shouldUpdate = true;
-            }
-            break;
-          case 'less than':
-            if (finalValue >= alert.amount) {
-              shouldUpdate = true;
-            }
-            break;
-          case 'equal to':
-            if (finalValue != alert.amount) {
-              shouldUpdate = true;
-            }
-            break;
-          default:
-            throw new Error(
-              `Unexpected condition value '${alert.condition}' for alert with ID '${alert._id}'`,
-            );
-        }
-
-        if (shouldUpdate) {
-          alert.status = 'Active';
-          alert.triggered_history.pop();
-          alert.triggered_at = null;
-          await alert.save({ session });
-        }
-      }
-    }
-  }
-
-  async updateTriggeredAtDate(
-    categoryId: string,
-    catgCurrentValue: number,
-    deduct: number,
-    session: any,
-  ): Promise<void> {
-    // Find all alerts with matching categoryId
-    const alerts = await this.alertModel
-      .find({ categoryId })
-      .session(session)
-      .exec();
-
-    if (!alerts) {
-      // No alerts found for this categoryId
-      return;
-    }
-
-    let finalValue: number;
-    if (deduct != 0) {
-      finalValue = catgCurrentValue + deduct;
-    }
-
-    // Iterate over each alert and update if necessary
-    for (let alert of alerts) {
-      let shouldUpdate = false;
-      if (alert.status == 'Triggered') {
-        switch (alert.condition) {
-          case 'greater than':
-            if (finalValue <= alert.amount) {
-              shouldUpdate = true;
-            }
-            break;
-          case 'less than':
-            if (finalValue >= alert.amount) {
-              shouldUpdate = true;
-            }
-            break;
-          case 'equal to':
-            if (finalValue != alert.amount) {
-              shouldUpdate = true;
-            }
-            break;
-          default:
-            throw new Error(
-              `Unexpected condition value '${alert.condition}' for alert with ID '${alert._id}'`,
-            );
-        }
-
-        if (shouldUpdate) {
-          alert.status = 'Active';
-          alert.triggered_history.pop();
-          alert.triggered_at = null;
-          await alert.save({ session });
-        }
       }
     }
   }

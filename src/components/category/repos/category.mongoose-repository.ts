@@ -172,6 +172,10 @@ export class MongooseCategoryRepository implements CategoryRepository {
           defaultCategory.id,
           session,
         );
+
+        defaultCategory.expenses = defaultCategory.expenses.concat(expenses); // Add expenses to uncategorized category
+        defaultCategory.current_value += deletedCategory.current_value; //add the deletecCategory.current_value
+        await defaultCategory.save({ session });
       }
 
       await this.userRepository.deleteCategoryFromUser(
@@ -237,6 +241,12 @@ export class MongooseCategoryRepository implements CategoryRepository {
     date: Date,
     session: any,
   ): Promise<void> {
+    Logger.log('deleteExpenseFromCategory :');
+    Logger.log('categoryId :', categoryId);
+    Logger.log('expenseId :', expenseId);
+    Logger.log('amount :', amount);
+    Logger.log('date :', date);
+
     let updateObject = { $pull: { expenses: expenseId } };
     let updated: boolean = false;
     let deducted = 0;
@@ -259,17 +269,8 @@ export class MongooseCategoryRepository implements CategoryRepository {
     let catgNewVal = category.current_value - amount;
 
     await this.alertService.reevaluateAlerts(category, catgNewVal, session);
-
-    // //if updated is true, that means it took place in the same month/year
-    // if (updated) {
-    //   await this.alertService.removeTriggeredAtDate(
-    //     categoryId,
-    //     category.current_value,
-    //     deducted,
-    //     session,
-    //   );
-    // }
   }
+
   //if expense date gets updated
   async updateExpenseInCategory(
     categoryId: string,
@@ -297,18 +298,9 @@ export class MongooseCategoryRepository implements CategoryRepository {
       throw new NotFoundException(`Category with ID '${categoryId}' not found`);
     }
 
-    let catgNewVal = category.current_value  -existingAmount + Updatedamount;
+    let catgNewVal = category.current_value - existingAmount + Updatedamount;
 
     await this.alertService.reevaluateAlerts(category, catgNewVal, session);
-    // //if updated is true, that means it took place in the same month/year
-    // if (updated) {
-    //   await this.alertService.updateTriggeredAtDate(
-    //     categoryId,
-    //     category.current_value,
-    //     deducted,
-    //     session,
-    //   );
-    // }
   }
   async createDefaultCategory(userId: string, session: any): Promise<Category> {
     Logger.log('createDefaultCategory-> userId: ', userId);
@@ -351,6 +343,11 @@ export class MongooseCategoryRepository implements CategoryRepository {
     date: Date,
     session: any,
   ): Promise<void> {
+    Logger.log('addExpenseToCategory :');
+    Logger.log('categoryId :', categoryId);
+    Logger.log('expenseId :', expenseId);
+    Logger.log('amount :', amount);
+    Logger.log('date :', date);
     let updateObject = {
       $push: { expenses: expenseId },
     };
@@ -374,15 +371,6 @@ export class MongooseCategoryRepository implements CategoryRepository {
     }
 
     await this.alertService.reevaluateAlerts(category, catgNewVal, session);
-
-    // if (updated) {
-    //   await this.alertService.addTriggeredAtDate(
-    //     categoryId,
-    //     category.current_value,
-    //     added,
-    //     session,
-    //   );
-    // }
   }
 
   async findAlertsOfCategory(categoryId: string): Promise<Alert[]> {

@@ -205,31 +205,51 @@ export class ExpenseService {
   }
 
   async update(id: string, expenseDto: UpdateExpenseDto): Promise<Expense> {
-    const existingExpense = await this.expenseModel.findById(id).exec();
-    if (!existingExpense) {
-      throw new NotFoundException(`Expense with ID '${id}' not found`);
-    }
-
-    let updatedExpense: any = { ...expenseDto };
-    const expense = await this.expenseModel
-      .findByIdAndUpdate(id, updatedExpense, {
-        new: true,
-        runValidators: true,
-      })
-      .exec();
-
-    if (!expense) {
-      throw new NotFoundException(`Expense with ID '${id}' not found`);
-    }
     const session = await this.expenseModel.db.startSession();
     session.startTransaction();
     // check if the category has been changed
 
-    Logger.log('expense :', expense);
-    Logger.log('existingExpense :', existingExpense);
     try {
+      const existingExpense = await this.expenseModel.findById(id).exec();
+      if (!existingExpense) {
+        throw new NotFoundException(`Expense with ID '${id}' not found`);
+      }
+
+      const categoryName = expenseDto.category;
+      const categId = await this.categoryRepository.findOneByName(
+        categoryName,
+        existingExpense.userId,
+        session,
+      );
+      delete expenseDto.category;
+
+      const dateInstance = new Date(expenseDto.date);
+      delete expenseDto.date;
+      const updatedExpense = {
+        ...expenseDto,
+        date: dateInstance,
+        userId: existingExpense.userId,
+        categoryId: categId,
+      };
+
+      const expense = await this.expenseModel
+        .findByIdAndUpdate(id, updatedExpense, {
+          new: true,
+          runValidators: true,
+        })
+        .exec();
+
+      if (!expense) {
+        throw new NotFoundException(`Expense with ID '${id}' not found`);
+      }
+
+      Logger.log('expense :', expense);
+      Logger.log('existingExpense :', existingExpense);
+
       if (existingExpense.categoryId !== expense.categoryId) {
         // remove the expense from the old category and deduct from current value if its in the same month/year of today
+        Logger.log('we inside if :');
+
         await this.categoryRepository.deleteExpenseFromCategory(
           existingExpense.categoryId,
           new Types.ObjectId(id),
@@ -258,6 +278,7 @@ export class ExpenseService {
       }
 
       await session.commitTransaction();
+      return expense;
     } catch (error) {
       // if anything goes wrong, undo any changes made in the database
       await session.abortTransaction();
@@ -265,8 +286,6 @@ export class ExpenseService {
     } finally {
       session.endSession();
     }
-
-    return expense;
   }
 
   async updateToUnCategorized(
