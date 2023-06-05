@@ -10,7 +10,7 @@ import {
 import { Expense } from '../schemas/expense.schema';
 import { CreateExpenseDto } from '../dtos/expense.create.dto';
 import { UpdateExpenseDto } from '../dtos/expense.update.dto';
-import { Model, Types } from 'mongoose';
+import mongoose, { Model, Types } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
 import {
   UserRepository,
@@ -64,7 +64,7 @@ export class ExpenseService {
         userId,
         new Types.ObjectId(createdExpense.id),
         session,
-      ); // Method which adds the category ID to the user who created it
+      ); // Method which adds the expense ID to the user who created it
 
       await this.categoryRepository.addExpenseToCategory(
         expense.categoryId,
@@ -205,6 +205,11 @@ export class ExpenseService {
   }
 
   async update(id: string, expenseDto: UpdateExpenseDto): Promise<Expense> {
+    const existingExpense = await this.expenseModel.findById(id).exec();
+    if (!existingExpense) {
+      throw new NotFoundException(`Expense with ID '${id}' not found`);
+    }
+
     let updatedExpense: any = { ...expenseDto };
     const expense = await this.expenseModel
       .findByIdAndUpdate(id, updatedExpense, {
@@ -215,6 +220,50 @@ export class ExpenseService {
 
     if (!expense) {
       throw new NotFoundException(`Expense with ID '${id}' not found`);
+    }
+    const session = await this.expenseModel.db.startSession();
+    session.startTransaction();
+    // check if the category has been changed
+
+    Logger.log('expense :', expense);
+    Logger.log('existingExpense :', existingExpense);
+    try {
+      if (existingExpense.categoryId !== expense.categoryId) {
+        // remove the expense from the old category and deduct from current value if its in the same month/year of today
+        await this.categoryRepository.deleteExpenseFromCategory(
+          existingExpense.categoryId,
+          new Types.ObjectId(id),
+          existingExpense.amount,
+          existingExpense.date,
+          session,
+        );
+
+        // add the expense to the new category and add to current value if its in the same month/year of today
+        await this.categoryRepository.addExpenseToCategory(
+          expense.categoryId,
+          new Types.ObjectId(id),
+          expense.amount,
+          expense.date,
+          session,
+        );
+      } else {
+        await this.categoryRepository.updateExpenseInCategory(
+          expense.categoryId,
+          new Types.ObjectId(id),
+          existingExpense.amount,
+          expense.amount,
+          expense.date,
+          session,
+        );
+      }
+
+      await session.commitTransaction();
+    } catch (error) {
+      // if anything goes wrong, undo any changes made in the database
+      await session.abortTransaction();
+      throw error;
+    } finally {
+      session.endSession();
     }
 
     return expense;
@@ -255,8 +304,10 @@ export class ExpenseService {
       );
 
       await this.categoryRepository.deleteExpenseFromCategory(
-        id,
         deletedExpense.categoryId,
+        new Types.ObjectId(id),
+        deletedExpense.amount,
+        deletedExpense.date,
         session,
       );
 

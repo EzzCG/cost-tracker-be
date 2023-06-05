@@ -28,6 +28,7 @@ import { create } from 'domain';
 import { async } from 'rxjs';
 import { AuthGuard } from '@nestjs/passport';
 import { AlertService } from 'src/components/alert/services/alert.service';
+import { isInCurrentMonthYear } from 'src/shared/helper-functions';
 
 @Injectable()
 export class MongooseCategoryRepository implements CategoryRepository {
@@ -230,20 +231,85 @@ export class MongooseCategoryRepository implements CategoryRepository {
   }
 
   async deleteExpenseFromCategory(
-    expenseId: string,
     categoryId: string,
+    expenseId: Types.ObjectId,
+    amount: number,
+    date: Date,
     session: any,
-  ): Promise<Category> {
+  ): Promise<void> {
+    let updateObject = { $pull: { expenses: expenseId } };
+    let updated: boolean = false;
+    let deducted = 0;
+
+    // Only decrement current_value if the year and month are the same
+    if (isInCurrentMonthYear(date)) {
+      updateObject['$inc'] = { current_value: -amount };
+      deducted = -amount;
+      updated = true;
+    }
+
     const category = await this.categoryModel
-      .findByIdAndUpdate(categoryId, { $pull: { expenses: expenseId } })
+      .findByIdAndUpdate(categoryId, updateObject)
       .session(session)
       .exec();
+
     if (!category) {
       throw new NotFoundException(`Category with ID '${categoryId}' not found`);
     }
-    return category;
-  }
+    let catgNewVal = category.current_value - amount;
 
+    await this.alertService.reevaluateAlerts(category, catgNewVal, session);
+
+    // //if updated is true, that means it took place in the same month/year
+    // if (updated) {
+    //   await this.alertService.removeTriggeredAtDate(
+    //     categoryId,
+    //     category.current_value,
+    //     deducted,
+    //     session,
+    //   );
+    // }
+  }
+  //if expense date gets updated
+  async updateExpenseInCategory(
+    categoryId: string,
+    expenseId: Types.ObjectId,
+    existingAmount: number,
+    Updatedamount: number,
+    date: Date,
+    session: any,
+  ): Promise<void> {
+    let updateObject: any;
+    let updated: boolean = false;
+
+    // Only decrement current_value if the year and month are the same
+    if (isInCurrentMonthYear(date)) {
+      updateObject['$inc'] = { current_value: -existingAmount + Updatedamount };
+      updated = true;
+    }
+
+    const category = await this.categoryModel
+      .findByIdAndUpdate(categoryId, updateObject)
+      .session(session)
+      .exec();
+
+    if (!category) {
+      throw new NotFoundException(`Category with ID '${categoryId}' not found`);
+    }
+
+    let catgNewVal = category.current_value  -existingAmount + Updatedamount;
+
+    await this.alertService.reevaluateAlerts(category, catgNewVal, session);
+    // //if updated is true, that means it took place in the same month/year
+    // if (updated) {
+    //   await this.alertService.updateTriggeredAtDate(
+    //     categoryId,
+    //     category.current_value,
+    //     deducted,
+    //     session,
+    //   );
+    // }
+  }
   async createDefaultCategory(userId: string, session: any): Promise<Category> {
     Logger.log('createDefaultCategory-> userId: ', userId);
     const defaultCategory = new this.categoryModel({
@@ -271,6 +337,11 @@ export class MongooseCategoryRepository implements CategoryRepository {
     if (!category) {
       throw new NotFoundException(`Category with ID '${categoryId}' not found`);
     }
+    await this.alertService.reevaluateAlerts(
+      category,
+      category.current_value,
+      session,
+    );
   }
 
   async addExpenseToCategory(
@@ -280,24 +351,14 @@ export class MongooseCategoryRepository implements CategoryRepository {
     date: Date,
     session: any,
   ): Promise<void> {
-    Logger.log('categoryId ', categoryId);
-    Logger.log('expenseId ', expenseId);
-    Logger.log('amount ', amount);
-
-    const currentDate = new Date(); //today's date
     let updateObject = {
       $push: { expenses: expenseId },
     };
 
     let updated: boolean = false;
-    let added = 0;
     // Only increment current_value if the year and month are the same
-    if (
-      currentDate.getFullYear() === date.getFullYear() &&
-      currentDate.getMonth() === date.getMonth()
-    ) {
+    if (isInCurrentMonthYear(date)) {
       updateObject['$inc'] = { current_value: amount };
-      added = amount;
       updated = true;
     }
 
@@ -306,18 +367,22 @@ export class MongooseCategoryRepository implements CategoryRepository {
       .session(session)
       .exec();
 
+    let catgNewVal = amount + category.current_value;
+
     if (!category) {
       throw new NotFoundException(`Category with ID '${categoryId}' not found`);
     }
 
-    if (updated) {
-      await this.alertService.updateTriggeredAtDate(
-        categoryId,
-        category.current_value,
-        added,
-        session,
-      );
-    }
+    await this.alertService.reevaluateAlerts(category, catgNewVal, session);
+
+    // if (updated) {
+    //   await this.alertService.addTriggeredAtDate(
+    //     categoryId,
+    //     category.current_value,
+    //     added,
+    //     session,
+    //   );
+    // }
   }
 
   async findAlertsOfCategory(categoryId: string): Promise<Alert[]> {

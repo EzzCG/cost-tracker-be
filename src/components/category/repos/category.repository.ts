@@ -18,10 +18,12 @@ export interface CategoryRepository {
     session: any,
   ): Promise<Category>;
   deleteExpenseFromCategory(
-    expenseId: string,
     categoryId: string,
+    expenseId: Types.ObjectId,
+    amount: number,
+    date: Date,
     session: any,
-  ): Promise<Category>;
+  ): Promise<void>
   deleteAllCategoriesOfUserId(userId: string, session: any): Promise<void>;
   createDefaultCategory(userId: string, session: any): Promise<Category>;
   addAlertToCategory(
@@ -33,6 +35,14 @@ export interface CategoryRepository {
     categoryId: string,
     expenseId: Types.ObjectId,
     amount: number,
+    date: Date,
+    session: any,
+  ): Promise<void>;
+  updateExpenseInCategory(
+    categoryId: string,
+    expenseId: Types.ObjectId,
+    existingAmount: number,
+    Updatedamount: number,
     date: Date,
     session: any,
   ): Promise<void>;

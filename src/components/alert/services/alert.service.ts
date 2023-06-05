@@ -22,6 +22,7 @@ import {
 } from 'src/components/user/repos/user.repository';
 import { UpdateAlertDto } from '../dtos/alert.update.dto';
 import * as cron from 'node-cron';
+import { Category } from 'src/components/category/schemas/category.schema';
 
 @Injectable()
 export class AlertService {
@@ -174,8 +175,62 @@ export class AlertService {
     return alert;
   }
 
-  //function that updates the triggered date
-  async updateTriggeredAtDate(
+  async reevaluateAlerts(category: Category, catgNewVal: number, session: any) {
+    const alerts = await this.alertModel
+      .find({ categoryId: category.id })
+      .session(session)
+      .exec();
+
+    Logger.log('Alerts: ', alerts);
+    for (const alert of alerts) {
+      let newStatus;
+      let shouldUpdate = false;
+      Logger.log('catgNewVal: ', catgNewVal);
+      Logger.log('alert.amount: ', alert.amount);
+
+      switch (alert.condition) {
+        case 'greater than':
+          newStatus = catgNewVal > alert.amount ? 'Triggered' : 'Active';
+          shouldUpdate = catgNewVal > alert.amount;
+          break;
+        case 'less than':
+          newStatus = catgNewVal < alert.amount ? 'Triggered' : 'Active';
+          shouldUpdate = catgNewVal < alert.amount;
+          break;
+        case 'equal to':
+          newStatus = catgNewVal == alert.amount ? 'Triggered' : 'Active';
+          shouldUpdate = catgNewVal == alert.amount;
+          break;
+        default:
+          throw new Error(`Invalid alert condition: ${alert.condition}`);
+      }
+
+      if (alert.status !== newStatus) {
+        alert.status = newStatus;
+        Logger.log('newStatus');
+
+        // If the alert has been triggered, update the triggered_at and history fields
+        if (shouldUpdate && newStatus === 'Triggered') {
+          Logger.log('triggered baby');
+          const now = new Date();
+          alert.triggered_at = now;
+          alert.triggered_history.push(now);
+        } else if (!shouldUpdate && newStatus === 'Active') {
+          Logger.log('back to active');
+          alert.triggered_at = null;
+          // Remove the last entry from triggered_history
+          if (alert.triggered_history.length > 0) {
+            alert.triggered_history.pop();
+          }
+        }
+
+        await alert.save({ session });
+      }
+    }
+  }
+
+  //function that adds  the triggered date incase of add expense
+  async addTriggeredAtDate(
     categoryId: string,
     catgCurrentValue: number,
     added: number,
@@ -200,41 +255,159 @@ export class AlertService {
 
     // Iterate over each alert and update if necessary
     for (let alert of alerts) {
-      let shouldUpdate = false;
-      switch (alert.condition) {
-        case 'greater than':
-          Logger.log('alert', alert.name);
+      if (alert.status != 'Triggered') {
+        let shouldUpdate = false;
+        switch (alert.condition) {
+          case 'greater than':
+            Logger.log('alert', alert.name);
 
-          Logger.log('finalValue', finalValue);
-          Logger.log('alert.amount', alert.amount);
-          if (finalValue > alert.amount) {
-            shouldUpdate = true;
-          }
-          break;
-        case 'less than':
-          if (finalValue < alert.amount) {
-            shouldUpdate = true;
-          }
-          break;
-        case 'equal to':
-          if (finalValue == alert.amount) {
-            shouldUpdate = true;
-          }
-          break;
-        default:
-          throw new Error(
-            `Unexpected condition value '${alert.condition}' for alert with ID '${alert._id}'`,
-          );
-      }
-
-      if (shouldUpdate) {
-        const now = new Date();
-        alert.triggered_at = now;
-        alert.triggered_history.push(now);
-        if (added != 0) {
-          alert.status = 'Triggered';
+            Logger.log('finalValue', finalValue);
+            Logger.log('alert.amount', alert.amount);
+            if (finalValue > alert.amount) {
+              shouldUpdate = true;
+            }
+            break;
+          case 'less than':
+            if (finalValue < alert.amount) {
+              shouldUpdate = true;
+            }
+            break;
+          case 'equal to':
+            if (finalValue == alert.amount) {
+              shouldUpdate = true;
+            }
+            break;
+          default:
+            throw new Error(
+              `Unexpected condition value '${alert.condition}' for alert with ID '${alert._id}'`,
+            );
         }
-        await alert.save({ session });
+
+        if (shouldUpdate) {
+          const now = new Date();
+          alert.triggered_at = now;
+          alert.triggered_history.push(now);
+          if (added != 0) {
+            alert.status = 'Triggered';
+          }
+          await alert.save({ session });
+        }
+      }
+    }
+  }
+
+  async removeTriggeredAtDate(
+    categoryId: string,
+    catgCurrentValue: number,
+    deduct: number,
+    session: any,
+  ): Promise<void> {
+    // Find all alerts with matching categoryId
+    const alerts = await this.alertModel
+      .find({ categoryId })
+      .session(session)
+      .exec();
+
+    if (!alerts) {
+      // No alerts found for this categoryId
+      return;
+    }
+
+    let finalValue: number;
+    if (deduct != 0) {
+      finalValue = catgCurrentValue - deduct;
+    }
+
+    // Iterate over each alert and update if necessary
+    for (let alert of alerts) {
+      let shouldUpdate = false;
+      if (alert.status == 'Triggered') {
+        switch (alert.condition) {
+          case 'greater than':
+            if (finalValue <= alert.amount) {
+              shouldUpdate = true;
+            }
+            break;
+          case 'less than':
+            if (finalValue >= alert.amount) {
+              shouldUpdate = true;
+            }
+            break;
+          case 'equal to':
+            if (finalValue != alert.amount) {
+              shouldUpdate = true;
+            }
+            break;
+          default:
+            throw new Error(
+              `Unexpected condition value '${alert.condition}' for alert with ID '${alert._id}'`,
+            );
+        }
+
+        if (shouldUpdate) {
+          alert.status = 'Active';
+          alert.triggered_history.pop();
+          alert.triggered_at = null;
+          await alert.save({ session });
+        }
+      }
+    }
+  }
+
+  async updateTriggeredAtDate(
+    categoryId: string,
+    catgCurrentValue: number,
+    deduct: number,
+    session: any,
+  ): Promise<void> {
+    // Find all alerts with matching categoryId
+    const alerts = await this.alertModel
+      .find({ categoryId })
+      .session(session)
+      .exec();
+
+    if (!alerts) {
+      // No alerts found for this categoryId
+      return;
+    }
+
+    let finalValue: number;
+    if (deduct != 0) {
+      finalValue = catgCurrentValue + deduct;
+    }
+
+    // Iterate over each alert and update if necessary
+    for (let alert of alerts) {
+      let shouldUpdate = false;
+      if (alert.status == 'Triggered') {
+        switch (alert.condition) {
+          case 'greater than':
+            if (finalValue <= alert.amount) {
+              shouldUpdate = true;
+            }
+            break;
+          case 'less than':
+            if (finalValue >= alert.amount) {
+              shouldUpdate = true;
+            }
+            break;
+          case 'equal to':
+            if (finalValue != alert.amount) {
+              shouldUpdate = true;
+            }
+            break;
+          default:
+            throw new Error(
+              `Unexpected condition value '${alert.condition}' for alert with ID '${alert._id}'`,
+            );
+        }
+
+        if (shouldUpdate) {
+          alert.status = 'Active';
+          alert.triggered_history.pop();
+          alert.triggered_at = null;
+          await alert.save({ session });
+        }
       }
     }
   }
