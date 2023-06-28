@@ -216,7 +216,6 @@ export class AlertService {
 
         // If the alert has been triggered, update the triggered_at and history fields
         if (shouldUpdate && newStatus === 'Triggered') {
-          Logger.log('triggered baby');
           const now = new Date();
           alert.triggered_at = now;
           alert.triggered_history.push(now);

@@ -40,7 +40,7 @@ export class UserController {
   }
 
   @UseGuards(JwtAuthGuard)
-  @Get()
+  @Get('all')
   async findAll(): Promise<User[]> {
     return await this.userService.findAll();
   }
@@ -48,6 +48,12 @@ export class UserController {
   @Get('by-id/:id')
   async findOne(@Param('id') id: string): Promise<User> {
     return this.userService.findOne(id);
+  }
+  //a method that returns the user based on the login token
+  @Get()
+  async findUser(@Request() req: UserRequest): Promise<User> {
+    Logger.log('findUser-> req.userId: ', req.userId);
+    return await this.userService.findUser(req.userId);
   }
 
   @Get('by-email/:email')

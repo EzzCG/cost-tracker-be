@@ -4,5 +4,4 @@ export interface Attachment {
   type: string;
   size: number;
   storageLocation: string;
-  //   expense: Expense;
 }

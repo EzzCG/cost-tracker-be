@@ -54,6 +54,10 @@ export class AuthModule implements NestModule {
         path: 'user/:id/alerts',
         method: RequestMethod.ALL,
       },
+      {
+        path: 'user',
+        method: RequestMethod.ALL,
+      },
     );
   }
 }

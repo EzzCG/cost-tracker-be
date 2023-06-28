@@ -98,24 +98,3 @@ export class CategoryController {
     return await this.categoryService.findAlertsOfCategory(categoryId);
   }
 }
-
-/*@Get('s:id/expenes')
-  async findExpenseOfCategory(
-    @Param('id') categoryId: string,
-    @Request() req: UserRequest,
-  ): Promise<Expense[]> {
-    Logger.log(
-      'UserController=> categoryId: ',
-      categoryId,
-      'req.categoryId: ',
-      req.userId,
-    );
-    if (categoryId !== req.userId) {
-      throw new UnauthorizedException(
-        "You are not authorized to access this user's expenses.",
-      );
-    }
-    return await this.categoryService.findExpensesOfCategory(categoryId);
-  }
-
-  */

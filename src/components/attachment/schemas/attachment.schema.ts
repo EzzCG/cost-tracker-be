@@ -15,7 +15,7 @@ export class Attachment extends Document {
   @Prop({ required: true })
   storageLocation: string;
 
-  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'Expense' }) // <-- This is how we store the Expense reference in the Attachment document
+  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'Expense' })
   expenseId: string;
 }
 

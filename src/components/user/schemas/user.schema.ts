@@ -32,6 +32,3 @@ export class User extends Document {
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);
-
-// @Prop({ type: [{ type: Schema.Types.ObjectId, ref: 'MonthlyReport' }] })
-// monthlyReports: MonthlyReport[];

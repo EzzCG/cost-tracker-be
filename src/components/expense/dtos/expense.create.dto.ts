@@ -26,8 +26,3 @@ export class CreateExpenseDto {
   @IsNotEmpty()
   category: string;
 }
-
-//   @IsOptional()
-//   @Type(() => CreateAttachmentDto)
-//   @ValidateNested()
-//   attachment?: CreateAttachmentDto;
