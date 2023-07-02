@@ -13,7 +13,7 @@ export class AuthMiddleware implements NestMiddleware {
   async use(@Request() req, res: Response, next: NextFunction) {
     // we extract the token from the authorization header
     const token = req.headers['authorization']?.split(' ')[1];
-    Logger.log('token: ', token);
+    Logger.log('token:', token);
 
     // If there's no token, return an unauthorized status
     if (!token) {

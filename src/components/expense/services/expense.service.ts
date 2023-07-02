@@ -42,13 +42,13 @@ export class ExpenseService {
     session.startTransaction(); //incase of an error, all queries, won't take effect
 
     try {
-      const categoryName = createExpenseDto.category;
+      const categoryName = createExpenseDto.categoryId;
       const categId = await this.categoryRepository.findOneByName(
         categoryName,
         userId,
         session,
       );
-      delete createExpenseDto.category;
+      delete createExpenseDto.categoryId;
 
       const dateInstance = new Date(createExpenseDto.date);
       delete createExpenseDto.date;
@@ -215,13 +215,13 @@ export class ExpenseService {
         throw new NotFoundException(`Expense with ID '${id}' not found`);
       }
 
-      const categoryName = expenseDto.category;
+      const categoryName = expenseDto.categoryId;
       const categId = await this.categoryRepository.findOneByName(
         categoryName,
         existingExpense.userId,
         session,
       );
-      delete expenseDto.category;
+      delete expenseDto.categoryId;
 
       const dateInstance = new Date(expenseDto.date);
       delete expenseDto.date;

@@ -14,10 +14,10 @@ export class CreateCategoryDto {
   readonly name: string;
 
   @IsInt()
-  @IsNotEmpty({ message: 'Surname field must not be empty.' })
+  @IsNotEmpty({ message: 'maxValue field must not be empty.' })
   readonly maxValue: number;
 
   @IsInt()
-  @IsNotEmpty({ message: 'Surname field must not be empty.' })
+  @IsNotEmpty({ message: 'minValue field must not be empty.' })
   readonly minValue: number;
 }

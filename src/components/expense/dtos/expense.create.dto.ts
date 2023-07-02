@@ -24,5 +24,5 @@ export class CreateExpenseDto {
 
   @IsString()
   @IsNotEmpty()
-  category: string;
+  categoryId: string;
 }

@@ -47,7 +47,7 @@ export class AlertService {
     session.startTransaction(); //incase of an error, all queries, won't take effect
 
     try {
-      const categoryName = createAlertDto.category;
+      const categoryName = createAlertDto.categoryId;
       Logger.log('categoryName: ' + categoryName);
       const categId = await this.categoryRepository.findOneByName(
         categoryName,
@@ -56,7 +56,7 @@ export class AlertService {
       );
       Logger.log('categId: ' + categId);
 
-      delete createAlertDto.category; //remove the category field because it doesn't belong in the schema
+      delete createAlertDto.categoryId; //remove the category field because it doesn't belong in the schema
       const alert = {
         ...createAlertDto,
         userId: userId,

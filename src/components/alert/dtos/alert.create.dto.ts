@@ -26,5 +26,5 @@ export class CreateAlertDto {
 
   @IsString()
   @IsNotEmpty()
-  category: string;
+  categoryId: string;
 }
