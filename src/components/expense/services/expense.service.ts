@@ -106,9 +106,15 @@ export class ExpenseService {
     year: number,
     userId: string,
   ): Promise<Expense[]> {
-    const startDate = new Date(month + '/01/' + year);
-    const endMonth = month == 12 ? 1 : month + 1; //if conditon incase of dec
-    const endDate = new Date(endMonth + '/01/' + year);
+    Logger.log('dto month zzz: ', month);
+    Logger.log('dto month zzz: ', year);
+
+    const startDate = new Date(year, month - 1); // month starts at zero, so dec is 0
+    const endDate =
+      month == 12 ? new Date(+year + 1, 0) : new Date(year, month % 12); // month % 12 will give 0 for December
+
+    Logger.log('startDate: ', startDate);
+    Logger.log('endDate: ', endDate);
 
     const expenses = await this.expenseModel.aggregate([
       {
@@ -147,9 +153,9 @@ export class ExpenseService {
     year: number,
     userId: string,
   ): Promise<Expense[]> {
-    const startDate = new Date(month + '/01/' + year);
-    const endMonth = month == 12 ? 1 : month + 1; //if conditon incase of dec
-    const endDate = new Date(endMonth + '/01/' + year);
+    const startDate = new Date(year, month - 1); // month starts at zero, so dec is 0
+    const endDate =
+      month == 12 ? new Date(+year + 1, 0) : new Date(year, month % 12); // month % 12 will give 0 for December
 
     const expenses = await this.expenseModel.aggregate([
       {

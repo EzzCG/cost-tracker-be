@@ -8,11 +8,9 @@ import {
 import { Type } from 'class-transformer';
 
 export class CreateReportDto {
-  @IsNumber()
   @IsNotEmpty()
   month: number;
 
-  @IsNumber()
   @IsNotEmpty()
   year: number;
 }

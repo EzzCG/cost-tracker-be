@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { Expense } from 'src/components/expense/schemas/expense.schema';
 import { ExpenseService } from 'src/components/expense/services/expense.service';
 import { CreateReportDto } from '../dtos/report.create.dto';
@@ -15,6 +15,9 @@ export class ReportService {
     createReportDto: CreateReportDto,
     userId: string,
   ): Promise<Expense[]> {
+    Logger.log('dto month: ', createReportDto.month);
+    Logger.log('dto year: ', createReportDto.year);
+
     return await this.expenseService.getOverview(
       createReportDto.month,
       createReportDto.year,

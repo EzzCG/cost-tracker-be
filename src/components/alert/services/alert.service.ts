@@ -115,13 +115,9 @@ export class AlertService {
     year: number,
     userId: string,
   ): Promise<Expense[]> {
-    const startDate = new Date(month + '/01/' + year);
-    const endMonth = month == 12 ? 1 : month + 1; //if conditon incase of dec
-    const endDate = new Date(endMonth + '/01/' + year);
-
-    // In MongoDB, months are 0-indexed, so January is 0, February is 1, etc. Therefore, subtract 1 from month for the startDate.
-    // Also, the endDate should be the start of the next month, so if the month is 12 (December), reset it to 0 (January) and increment the year by 1.
-    // If the month is not December, simply increment it by 1.
+    const startDate = new Date(year, month - 1); // month starts at zero, so dec is 0
+    const endDate =
+      month == 12 ? new Date(+year + 1, 0) : new Date(year, month % 12); // month % 12 will give 0 for December
 
     const alerts = await this.alertModel.aggregate([
       {

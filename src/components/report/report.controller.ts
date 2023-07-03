@@ -15,6 +15,7 @@ import {
   Logger,
   Inject,
   Request,
+  Query,
 } from '@nestjs/common';
 import { CreateReportDto } from './dtos/report.create.dto';
 import { UserRequest } from '../auth/middleware/user-request.interface';
@@ -28,15 +29,16 @@ export class ReportController {
 
   @Get('overview')
   async getOverview(
-    @Body() createReportDto: CreateReportDto,
+    @Query() createReportDto: CreateReportDto,
     @Request() req: UserRequest,
   ): Promise<Expense[]> {
+    Logger.log('dto: ', createReportDto);
     return await this.reportService.getOverview(createReportDto, req.userId);
   }
 
   @Get('categories')
   async getCategories(
-    @Body() createReportDto: CreateReportDto,
+    @Query() createReportDto: CreateReportDto,
     @Request() req: UserRequest,
   ): Promise<Expense[]> {
     return await this.reportService.getCategories(createReportDto, req.userId);
@@ -44,7 +46,7 @@ export class ReportController {
 
   @Get('alerts')
   async getAlerts(
-    @Body() createReportDto: CreateReportDto,
+    @Query() createReportDto: CreateReportDto,
     @Request() req: UserRequest,
   ): Promise<Expense[]> {
     return await this.reportService.getAlerts(createReportDto, req.userId);
