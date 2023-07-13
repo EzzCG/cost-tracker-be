@@ -21,6 +21,7 @@ import { Attachment } from '../schemas/attachment.schema';
 import { CreateAttachmentDto } from '../dtos/attachment.create.dto';
 import { ExpenseService } from 'src/components/expense/services/expense.service';
 import { UpdateAttachmentDto } from '../dtos/attachment.update.dto';
+import { unlinkSync } from 'fs';
 
 @Injectable()
 export class AttachmentService {
@@ -38,12 +39,6 @@ export class AttachmentService {
     try {
       const createdAttachment = new this.attachmentModel(createAttachmentDto);
       await createdAttachment.save({ session });
-
-      await this.expenseService.addAttachmentToExpense(
-        createdAttachment.expenseId,
-        createdAttachment,
-        session,
-      );
 
       await session.commitTransaction();
       return createdAttachment;
@@ -103,10 +98,13 @@ export class AttachmentService {
         throw new NotFoundException(`Attachment with id '${id}' not found`);
       }
 
+      console.log('removedAttachment: ', removedAttachment);
       await this.expenseService.removeAttachmentFromExpense(
         removedAttachment.expenseId,
         session,
       );
+      //we delete the file from the system
+      unlinkSync(removedAttachment.storageLocation);
 
       await session.commitTransaction();
 
@@ -123,6 +121,9 @@ export class AttachmentService {
     attachmentId: string,
     session: any,
   ): Promise<Attachment> {
+    //   console.log('deletedExpense.attachment: ');
+    //   console.log('attachmentId: ', attachmentId);
+
     const removedAttachment = await this.attachmentModel
       .findByIdAndRemove(attachmentId)
       .session(session)
@@ -133,6 +134,28 @@ export class AttachmentService {
         `Attachment with id '${attachmentId}' not found`,
       );
     }
+    //we also delete the attachment file from the disk storage
+    await this.expenseService.deleteAttachmentFile(
+      removedAttachment.storageLocation,
+      session,
+    );
     return removedAttachment;
+  }
+
+  //method to update the expenseId
+  async updateExpenseId(id: string, expenseId: string): Promise<Attachment> {
+    return this.attachmentModel.findByIdAndUpdate(
+      id,
+      { expenseId },
+      { new: true },
+    );
+  }
+
+  async getStorageLocation(id: string): Promise<string> {
+    const attachment = await this.attachmentModel.findById(id).exec();
+    if (!attachment) {
+      throw new NotFoundException(`Attachment with id '${id}' not found`);
+    }
+    return attachment.storageLocation;
   }
 }

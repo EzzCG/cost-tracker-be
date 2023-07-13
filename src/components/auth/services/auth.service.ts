@@ -30,11 +30,11 @@ export class AuthService {
   }
 
   async login(user: any) {
-    this.logger.log(`User object: ${JSON.stringify(user)}`);
+    // this.logger.log(`User object: ${JSON.stringify(user)}`);
     const payload = { email: user._doc.email, sub: user._doc._id };
-    this.logger.log(`Payload: ${JSON.stringify(payload)}`);
+    // this.logger.log(`Payload: ${JSON.stringify(payload)}`);
     const access_token = this.jwtService.sign(payload);
-    this.logger.log(`Generated access_token: ${access_token}`);
+    // this.logger.log(`Generated access_token: ${access_token}`);
     return {
       access_token: access_token,
     };

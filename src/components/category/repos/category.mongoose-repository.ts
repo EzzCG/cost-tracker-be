@@ -108,7 +108,7 @@ export class MongooseCategoryRepository implements CategoryRepository {
         .session(session)
         .exec();
 
-      Logger.log(`findOneByName->category: ${category}`);
+      // Logger.log(`findOneByName->category: ${category}`);
 
       if (!category) {
         throw new NotFoundException(`Category with name '${name}' not found`);
@@ -241,11 +241,11 @@ export class MongooseCategoryRepository implements CategoryRepository {
     date: Date,
     session: any,
   ): Promise<void> {
-    Logger.log('deleteExpenseFromCategory :');
-    Logger.log('categoryId :', categoryId);
-    Logger.log('expenseId :', expenseId);
-    Logger.log('amount :', amount);
-    Logger.log('date :', date);
+    // Logger.log('deleteExpenseFromCategory :');
+    // Logger.log('categoryId :', categoryId);
+    // Logger.log('expenseId :', expenseId);
+    // Logger.log('amount :', amount);
+    // Logger.log('date :', date);
 
     let updateObject = { $pull: { expenses: expenseId } };
     let updated: boolean = false;
@@ -343,11 +343,11 @@ export class MongooseCategoryRepository implements CategoryRepository {
     date: Date,
     session: any,
   ): Promise<void> {
-    Logger.log('addExpenseToCategory :');
-    Logger.log('categoryId :', categoryId);
-    Logger.log('expenseId :', expenseId);
-    Logger.log('amount :', amount);
-    Logger.log('date :', date);
+    // Logger.log('addExpenseToCategory :');
+    // Logger.log('categoryId :', categoryId);
+    // Logger.log('expenseId :', expenseId);
+    // Logger.log('amount :', amount);
+    // Logger.log('date :', date);
     let updateObject = {
       $push: { expenses: expenseId },
     };

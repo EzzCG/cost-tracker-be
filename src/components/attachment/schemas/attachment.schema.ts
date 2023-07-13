@@ -20,4 +20,4 @@ export class Attachment extends Document {
 }
 
 export const AttachmentSchema = SchemaFactory.createForClass(Attachment);
-AttachmentSchema.index({ expenseId: 1 }, { unique: true });
+AttachmentSchema.index({ expenseId: 1 });

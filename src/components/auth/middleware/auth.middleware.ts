@@ -13,7 +13,7 @@ export class AuthMiddleware implements NestMiddleware {
   async use(@Request() req, res: Response, next: NextFunction) {
     // we extract the token from the authorization header
     const token = req.headers['authorization']?.split(' ')[1];
-    Logger.log('token:', token);
+    // Logger.log('token:', token);
 
     // If there's no token, return an unauthorized status
     if (!token) {
@@ -26,13 +26,13 @@ export class AuthMiddleware implements NestMiddleware {
       const decoded = jwt.verify(token, process.env.JWT_SECRET) as JwtPayload; //we do a type assertion to be able to
 
       //we extract the email
-      Logger.log('decoded: ', decoded);
+      // Logger.log('decoded: ', decoded);
       // we find the user by the decoded userId and attach the user object to the request
       const user = await this.userService.findByEmail(decoded.email);
 
       // req.user = { id: user.id, email: user.email }; //this to assign un obj with id and email
       req.userId = user.id; //this to assign only id
-      Logger.log('User: ', req.user);
+      // Logger.log('User: ', req.user);
 
       // we call the next middleware or controller
       next();

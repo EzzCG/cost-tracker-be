@@ -182,7 +182,7 @@ export class AlertService {
       .session(session)
       .exec();
 
-    Logger.log('Alerts: ', alerts);
+    // Logger.log('Alerts: ', alerts);
     for (const alert of alerts) {
       let newStatus;
       let shouldUpdate = false;

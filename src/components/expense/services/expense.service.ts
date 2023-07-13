@@ -5,6 +5,7 @@ import {
   forwardRef,
   InternalServerErrorException,
   Logger,
+  UnauthorizedException,
 } from '@nestjs/common';
 
 import { Expense } from '../schemas/expense.schema';
@@ -22,6 +23,8 @@ import {
 } from 'src/components/category/repos/category.repository';
 import { Attachment } from 'src/components/attachment/schemas/attachment.schema';
 import { AttachmentService } from 'src/components/attachment/services/attachment.service';
+import { CreateAttachmentDto } from 'src/components/attachment/dtos/attachment.create.dto';
+import * as fs from 'fs';
 
 @Injectable()
 export class ExpenseService {
@@ -37,6 +40,7 @@ export class ExpenseService {
   async create(
     createExpenseDto: CreateExpenseDto,
     userId: string,
+    newAttachment: CreateAttachmentDto | null,
   ): Promise<Expense> {
     const session = await this.expenseModel.db.startSession(); //we start a session here of dif queries
     session.startTransaction(); //incase of an error, all queries, won't take effect
@@ -57,8 +61,31 @@ export class ExpenseService {
         date: dateInstance,
         userId: userId,
         categoryId: categId,
+        attachment: null, // we start off with a null attachment
       };
+
       const createdExpense = new this.expenseModel(expense);
+
+      //if there is an attachment
+      if (newAttachment) {
+        console.log('newAttachment: ', newAttachment);
+        newAttachment.expenseId = createdExpense._id; //we set the expenseId to the attachment
+
+        //we create the attachment
+        const createdAttachment = await this.attachmentService.create(
+          newAttachment,
+        );
+
+        //we update the expenseId of the newly created attachment
+        await this.attachmentService.updateExpenseId(
+          createdAttachment.id,
+          createdExpense.id,
+        );
+
+        // we update the attachment id of the expense
+        createdExpense.attachment = createdAttachment._id; // add the attachment id to the expense
+        await createdExpense.save({ session });
+      }
 
       await this.userRepository.addExpenseToUser(
         userId,
@@ -210,7 +237,12 @@ export class ExpenseService {
     return expenses;
   }
 
-  async update(id: string, expenseDto: UpdateExpenseDto): Promise<Expense> {
+  async update(
+    id: string,
+    expenseDto: UpdateExpenseDto,
+    userId: string,
+    newAttachment: CreateAttachmentDto | null,
+  ): Promise<Expense> {
     const session = await this.expenseModel.db.startSession();
     session.startTransaction();
     // check if the category has been changed
@@ -220,7 +252,35 @@ export class ExpenseService {
       if (!existingExpense) {
         throw new NotFoundException(`Expense with ID '${id}' not found`);
       }
+      // Check if the user has permissions to update the expense
+      if (existingExpense.userId !== userId) {
+        throw new UnauthorizedException(
+          'You do not have permission to update this expense',
+        );
+      }
 
+      // const { attachment } = existingExpense; // we destruct the attachment property from the expense object
+
+      //if there is an attachment
+      if (newAttachment) {
+        console.log('newAttachment: ', newAttachment);
+        newAttachment.expenseId = existingExpense._id; //we set the expenseId to the attachment
+
+        //we create the attachment
+        const createdAttachment = await this.attachmentService.create(
+          newAttachment,
+        );
+
+        //we update the expenseId of the newly created attachment
+        await this.attachmentService.updateExpenseId(
+          createdAttachment.id,
+          existingExpense.id,
+        );
+
+        // we update the attachment id of the expense
+        existingExpense.attachment = createdAttachment._id; // add the attachment id to the expense
+      }
+      //we have the categoryName but we need the category Id
       const categoryName = expenseDto.categoryId;
       const categId = await this.categoryRepository.findOneByName(
         categoryName,
@@ -236,6 +296,9 @@ export class ExpenseService {
         date: dateInstance,
         userId: existingExpense.userId,
         categoryId: categId,
+        attachment: newAttachment
+          ? existingExpense.attachment
+          : expenseDto.attachment,
       };
 
       const expense = await this.expenseModel
@@ -249,13 +312,8 @@ export class ExpenseService {
         throw new NotFoundException(`Expense with ID '${id}' not found`);
       }
 
-      Logger.log('expense :', expense);
-      Logger.log('existingExpense :', existingExpense);
-
       if (existingExpense.categoryId !== expense.categoryId) {
         // remove the expense from the old category and deduct from current value if its in the same month/year of today
-        Logger.log('we inside if :');
-
         await this.categoryRepository.deleteExpenseFromCategory(
           existingExpense.categoryId,
           new Types.ObjectId(id),
@@ -338,8 +396,9 @@ export class ExpenseService {
 
       //if there's an attachment, we delete it too
       if (deletedExpense.attachment) {
+        console.log('deletedExpense.attachment: ', deletedExpense.attachment);
         await this.attachmentService.deleteAttachmentOfExpense(
-          deletedExpense.attachment.id,
+          deletedExpense.attachment.toString(),
           session,
         );
       }
@@ -377,47 +436,43 @@ export class ExpenseService {
     }
 
     expense.attachment = null;
+    console.log('removeAttachmentFromExpense: ', expense);
+
     await expense.save();
   }
 
-  async addAttachmentToExpense(
-    expenseId: string,
-    attachment: Attachment,
+  async deleteAttachmentFile(
+    storageLocation: string,
     session: any,
   ): Promise<void> {
-    const expense = await this.expenseModel
-      .findById(expenseId)
-      .session(session);
-
-    if (!expense) {
-      throw new NotFoundException(`Expense with id '${expenseId}' not found`);
+    try {
+      fs.unlinkSync(storageLocation); // Delete the file in storage location
+    } catch (error) {
+      // Handle error appropriately
+      console.error(error);
     }
-
-    expense.attachment = attachment;
-    await expense.save();
-  }
-
-  async findAttachmentOfExpense(expenseId: string): Promise<Attachment> {
-    const expense2 = await this.expenseModel.findById(expenseId).exec();
-    if (!expense2) {
-      throw new NotFoundException(`Expense with ID '${expenseId}' not found`);
-    }
-    expense2.populate('attachment');
-
-    const expense = await this.expenseModel
-      .findById(expenseId)
-      .populate('attachment')
-      .exec();
-
-    if (!expense) {
-      throw new NotFoundException(`Expense with id '${expenseId}' not found`);
-    }
-
-    if (!expense.attachment) {
-      throw new NotFoundException(
-        `Expense with id ${expenseId} doesn't have an attachment`,
-      );
-    }
-    return expense.attachment;
   }
 }
+//   async findAttachmentOfExpense(expenseId: string): Promise<Attachment> {
+//   const expense2 = await this.expenseModel.findById(expenseId).exec();
+//   if (!expense2) {
+//     throw new NotFoundException(`Expense with ID '${expenseId}' not found`);
+//   }
+//   expense2.populate('attachment');
+
+//   const expense = await this.expenseModel
+//     .findById(expenseId)
+//     .populate('attachment')
+//     .exec();
+
+//   if (!expense) {
+//     throw new NotFoundException(`Expense with id '${expenseId}' not found`);
+//   }
+
+//   if (!expense.attachment) {
+//     throw new NotFoundException(
+//       `Expense with id ${expenseId} doesn't have an attachment`,
+//     );
+//   }
+//   return expense.attachment;
+// }

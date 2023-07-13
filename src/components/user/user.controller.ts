@@ -79,7 +79,7 @@ export class UserController {
     @Param('id') userId: string,
     @Request() req: UserRequest,
   ): Promise<Category[]> {
-    Logger.log('UserController=> userId: ', userId, 'req.userId: ', req.userId);
+    // Logger.log('UserController=> userId: ', userId, 'req.userId: ', req.userId);
     if (userId !== req.userId) {
       throw new UnauthorizedException(
         "You are not authorized to access this user's categories.",
@@ -93,7 +93,7 @@ export class UserController {
     @Param('id') userId: string,
     @Request() req: UserRequest,
   ): Promise<Expense[]> {
-    Logger.log('UserController=> userId: ', userId, 'req.userId: ', req.userId);
+    // Logger.log('UserController=> userId: ', userId, 'req.userId: ', req.userId);
     if (userId !== req.userId) {
       throw new UnauthorizedException(
         "You are not authorized to access this user's expenses.",
@@ -107,7 +107,7 @@ export class UserController {
     @Param('id') userId: string,
     @Request() req: UserRequest,
   ): Promise<Alert[]> {
-    Logger.log('UserController=> userId: ', userId, 'req.userId: ', req.userId);
+    // Logger.log('UserController=> userId: ', userId, 'req.userId: ', req.userId);
     if (userId !== req.userId) {
       throw new UnauthorizedException(
         "You are not authorized to access this user's alerts.",
