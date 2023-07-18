@@ -49,8 +49,9 @@ export class AlertController {
   async update(
     @Param('id') id: string,
     @Body() updateAlertDto: UpdateAlertDto,
+    @Request() req: UserRequest,
   ): Promise<Alert> {
-    return await this.alertService.update(id, updateAlertDto);
+    return await this.alertService.update(id, updateAlertDto, req.userId);
   }
 
   @Delete(':id')

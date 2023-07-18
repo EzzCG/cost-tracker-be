@@ -35,6 +35,7 @@ export class AlertService {
   ) {
     cron.schedule('* * 1 * *', this.resetAllTriggeredAt.bind(this));
   }
+
   //a function that  resets all the alerts triggered_at to 0
   async resetAllTriggeredAt(): Promise<void> {
     const alerts = await this.alertModel.updateMany(
@@ -42,6 +43,7 @@ export class AlertService {
       { $set: { triggered_at: null, status: 'Active' } },
     );
   }
+
   async create(createAlertDto: CreateAlertDto, userId: string): Promise<Alert> {
     const session = await this.alertModel.db.startSession(); //we start a session here of dif queries
     session.startTransaction(); //incase of an error, all queries, won't take effect
@@ -115,22 +117,19 @@ export class AlertService {
     year: number,
     userId: string,
   ): Promise<Expense[]> {
-    const startDate = new Date(year, month - 1); // month starts at zero, so dec is 0
+    // Define the start and end date for the month
+    const startDate = new Date(year, month - 1);
     const endDate =
-      month == 12 ? new Date(+year + 1, 0) : new Date(year, month % 12); // month % 12 will give 0 for December
+      month == 12 ? new Date(+year + 1, 0) : new Date(year, month % 12);
 
+    // we retrieve all alerts for the user
     const alerts = await this.alertModel.aggregate([
       {
-        $match: {
-          userId: userId,
-          $or: [
-            // Either the alert was triggered within the month, or it is still active
-            { triggered_at: { $gte: startDate, $lt: endDate } },
-            { status: 'Active' },
-          ],
-        },
+        // we filter for alerts from this user
+        $match: { userId: userId },
       },
       {
+        // we join with the categories collection, extracting the category by its id and saving it as categoryData
         $lookup: {
           from: 'categories',
           let: { categoryId: { $toObjectId: '$categoryId' } },
@@ -138,10 +137,50 @@ export class AlertService {
           as: 'categoryData',
         },
       },
+      // we open up the array of categoryData
+      { $unwind: '$categoryData' },
       {
-        $unwind: '$categoryData',
+        // ew crreate a new field for the dates this alert was triggered this month
+        $addFields: {
+          wasTriggeredInMonth: {
+            //we use filter operator to loop through the array triggered_history and create the new array
+            //which with elements that match the condition
+            $filter: {
+              input: '$triggered_history',
+              as: 'date', //for each element of triggered_history.filter((date)=> )
+              cond: {
+                // we check if the date is within this month
+                $and: [
+                  { $gte: ['$$date', startDate] },
+                  { $lt: ['$$date', endDate] },
+                ],
+              },
+            },
+          },
+        },
       },
+      // we get the first element from the array of triggered dates this month and save it dateTriggeredAt
       {
+        $addFields: {
+          dateTriggeredAt: { $arrayElemAt: ['$wasTriggeredInMonth', 0] },
+        },
+      },
+      // { $project: { _id: 1, dateTriggeredAt: 1 } },
+      {
+        // we set the status based on whether it was triggered this month
+        $addFields: {
+          status: {
+            $cond: [
+              { $eq: [{ $size: "$wasTriggeredInMonth" }, 0] }, //if size equals to 0, it's active, otherwise it's triggered
+              'Active',
+              'Triggered',
+            ],
+          },
+        },
+      },
+      // { $project: { _id: 1, dateTriggeredAt: 1 } },
+      {
+        // Project the desired fields
         $project: {
           _id: 0,
           alert: '$name',
@@ -151,29 +190,65 @@ export class AlertService {
           },
           status: '$status',
           date: {
-            $dateToString: { format: '%d-%m-%Y', date: '$triggered_at' },
+            // Format the date if it exists
+            $cond: [
+              { $eq: ['$dateTriggeredAt', null] },
+              'Not Triggered',
+              {
+                $dateToString: {
+                  format: '%d-%m-%Y',
+                  date: '$dateTriggeredAt',
+                },
+              },
+            ],
           },
         },
+        
       },
     ]);
 
     return alerts;
   }
 
-  async update(id: string, alertDto: UpdateAlertDto): Promise<Alert> {
-    let updatedAlert: any = { ...alertDto };
-    const alert = await this.alertModel
-      .findByIdAndUpdate(id, updatedAlert, {
-        new: true,
-        runValidators: true,
-      })
-      .exec();
+  async update(id: string, alertDto: UpdateAlertDto, userId: string): Promise<Alert> {
+    const session = await this.alertModel.db.startSession(); //we start a session here of dif queries
+    session.startTransaction(); //incase of an error, all queries, won't take effect
 
-    if (!alert) {
-      throw new NotFoundException(`Expense with ID '${id}' not found`);
+    try {
+      const categoryName = alertDto.categoryId;
+      Logger.log('categoryName: ' + categoryName);
+      const categId = await this.categoryRepository.findOneByName(
+        categoryName,
+        userId,
+        session,
+      );
+      Logger.log('categId: ' + categId);
+
+      delete alertDto.categoryId; //remove the category field because it doesn't belong in the schema
+      alertDto = {
+        ...alertDto,
+        categoryId: categId,
+      };
+      let updatedAlert: any = { ...alertDto };
+      const alert = await this.alertModel
+        .findByIdAndUpdate(id, updatedAlert, {
+          new: true,
+          runValidators: true,
+        })
+        .session(session)
+        .exec();
+
+      const catg = await this.categoryRepository.findOne(alert.categoryId);
+      await this.reevaluateAlerts(catg, catg.current_value, session); //we check if anything triggers the alert immediately
+
+      await session.commitTransaction();
+      return alert;
+    } catch (error) {
+      await session.abortTransaction();
+      throw error; // don't return the error, throw it so it can be handled by your error handling middleware
+    } finally {
+      session.endSession();
     }
-
-    return alert;
   }
 
   async reevaluateAlerts(category: Category, catgNewVal: number, session: any) {
