@@ -23,7 +23,7 @@ export async function checkEmailExists(
   const existingUser = await userModel.findOne({ email }).exec();
   if (existingUser) {
     throw new ConflictException(
-      `Email, ${email}  already exists for another user`,
+      `Email ${email}  already exists for another user`,
     );
   }
 }

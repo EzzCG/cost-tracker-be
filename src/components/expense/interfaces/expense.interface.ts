@@ -6,6 +6,3 @@ export interface Expense {
   date: string;
   userId: string;
 }
-
-//   attachment?: Attachment;
-//   monthlyReport?: MonthlyReport;

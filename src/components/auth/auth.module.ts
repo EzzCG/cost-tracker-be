@@ -16,6 +16,7 @@ import { CategoryController } from '../category/category.controller';
 import { AuthMiddleware } from './middleware/auth.middleware';
 import { AlertController } from '../alert/alert.controller';
 import { ExpenseController } from '../expense/expense.controller';
+import { ReportController } from '../report/report.controller';
 @Module({
   imports: [
     UserModule,
@@ -26,7 +27,7 @@ import { ExpenseController } from '../expense/expense.controller';
       inject: [ConfigService],
       useFactory: async (configService: ConfigService) => ({
         secret: configService.get<string>('JWT_SECRET'),
-        signOptions: { expiresIn: '60m' },
+        signOptions: { expiresIn: '1h' },
       }),
     }),
   ],
@@ -40,6 +41,7 @@ export class AuthModule implements NestModule {
       CategoryController,
       AlertController,
       ExpenseController,
+      ReportController,
       {
         path: 'user/:id/categories',
         method: RequestMethod.ALL,
@@ -51,6 +53,10 @@ export class AuthModule implements NestModule {
       {
         path: 'user/:id/alerts',
         method: RequestMethod.ALL,
+      },
+      {
+        path: 'user',
+        method: RequestMethod.GET,
       },
     );
   }

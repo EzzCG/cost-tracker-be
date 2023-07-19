@@ -15,7 +15,11 @@ export class Expense extends Document {
   @Prop({ required: true })
   userId: string;
 
-  @Prop({ required: true })
+  @Prop({
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Category',
+    required: true,
+  })
   categoryId: string;
 
   @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'Attachment' })
@@ -23,4 +27,4 @@ export class Expense extends Document {
 }
 
 export const ExpenseSchema = SchemaFactory.createForClass(Expense);
-ExpenseSchema.index({ attachment: 1 }, { unique: true, sparse: true }); //skips attachment with null values which means null can't be unique
+ExpenseSchema.index({ attachment: 1 }, { sparse: true }); //skips attachment with null values which means null can't be unique

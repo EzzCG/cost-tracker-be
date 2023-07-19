@@ -6,23 +6,11 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-//   import { CreateExpenseDto } from './CreateExpenseDto';
 
 export class CreateReportDto {
-  @IsNumber()
   @IsNotEmpty()
-  totExpenses: number;
+  month: number;
 
-  @IsNumber()
   @IsNotEmpty()
-  totIncome: number;
-
-  @IsNumber()
-  @IsNotEmpty()
-  netBalance: number;
-
-  // @IsOptional()
-  // @Type(() => CreateExpenseDto)
-  // @ValidateNested()
-  // expenses?: CreateExpenseDto[];
+  year: number;
 }

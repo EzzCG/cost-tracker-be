@@ -3,7 +3,8 @@ import { AppModule } from './app.module';
 import { Logger, ValidationPipe } from '@nestjs/common';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, { cors: true });
+
   const globalPrefix = 'api';
   app.useGlobalPipes(new ValidationPipe());
   await app.listen(3000);

@@ -28,6 +28,7 @@ import { create } from 'domain';
 import { async } from 'rxjs';
 import { AuthGuard } from '@nestjs/passport';
 import { AlertService } from 'src/components/alert/services/alert.service';
+import { isInCurrentMonthYear } from 'src/shared/helper-functions';
 
 @Injectable()
 export class MongooseCategoryRepository implements CategoryRepository {
@@ -107,7 +108,7 @@ export class MongooseCategoryRepository implements CategoryRepository {
         .session(session)
         .exec();
 
-      Logger.log(`findOneByName->category: ${category}`);
+      // Logger.log(`findOneByName->category: ${category}`);
 
       if (!category) {
         throw new NotFoundException(`Category with name '${name}' not found`);
@@ -171,6 +172,10 @@ export class MongooseCategoryRepository implements CategoryRepository {
           defaultCategory.id,
           session,
         );
+
+        defaultCategory.expenses = defaultCategory.expenses.concat(expenses); // Add expenses to uncategorized category
+        defaultCategory.current_value += deletedCategory.current_value; //add the deletecCategory.current_value
+        await defaultCategory.save({ session });
       }
 
       await this.userRepository.deleteCategoryFromUser(
@@ -230,20 +235,73 @@ export class MongooseCategoryRepository implements CategoryRepository {
   }
 
   async deleteExpenseFromCategory(
-    expenseId: string,
     categoryId: string,
+    expenseId: Types.ObjectId,
+    amount: number,
+    date: Date,
     session: any,
-  ): Promise<Category> {
+  ): Promise<void> {
+    // Logger.log('deleteExpenseFromCategory :');
+    // Logger.log('categoryId :', categoryId);
+    // Logger.log('expenseId :', expenseId);
+    // Logger.log('amount :', amount);
+    // Logger.log('date :', date);
+
+    let updateObject = { $pull: { expenses: expenseId } };
+    let updated: boolean = false;
+    let deducted = 0;
+
+    // Only decrement current_value if the year and month are the same
+    if (isInCurrentMonthYear(date)) {
+      updateObject['$inc'] = { current_value: -amount };
+      deducted = -amount;
+      updated = true;
+    }
+
     const category = await this.categoryModel
-      .findByIdAndUpdate(categoryId, { $pull: { expenses: expenseId } })
+      .findByIdAndUpdate(categoryId, updateObject)
       .session(session)
       .exec();
+
     if (!category) {
       throw new NotFoundException(`Category with ID '${categoryId}' not found`);
     }
-    return category;
+    let catgNewVal = category.current_value - amount;
+
+    await this.alertService.reevaluateAlerts(category, catgNewVal, session);
   }
 
+  //if expense date gets updated
+  async updateExpenseInCategory(
+    categoryId: string,
+    expenseId: Types.ObjectId,
+    existingAmount: number,
+    Updatedamount: number,
+    date: Date,
+    session: any,
+  ): Promise<void> {
+    let updateObject: any;
+    let updated: boolean = false;
+
+    // Only decrement current_value if the year and month are the same
+    if (isInCurrentMonthYear(date)) {
+      updateObject['$inc'] = { current_value: -existingAmount + Updatedamount };
+      updated = true;
+    }
+
+    const category = await this.categoryModel
+      .findByIdAndUpdate(categoryId, updateObject)
+      .session(session)
+      .exec();
+
+    if (!category) {
+      throw new NotFoundException(`Category with ID '${categoryId}' not found`);
+    }
+
+    let catgNewVal = category.current_value - existingAmount + Updatedamount;
+
+    await this.alertService.reevaluateAlerts(category, catgNewVal, session);
+  }
   async createDefaultCategory(userId: string, session: any): Promise<Category> {
     Logger.log('createDefaultCategory-> userId: ', userId);
     const defaultCategory = new this.categoryModel({
@@ -271,34 +329,48 @@ export class MongooseCategoryRepository implements CategoryRepository {
     if (!category) {
       throw new NotFoundException(`Category with ID '${categoryId}' not found`);
     }
+    await this.alertService.reevaluateAlerts(
+      category,
+      category.current_value,
+      session,
+    );
   }
 
   async addExpenseToCategory(
     categoryId: string,
     expenseId: Types.ObjectId,
     amount: number,
+    date: Date,
     session: any,
   ): Promise<void> {
-    Logger.log('categoryId ', categoryId);
-    Logger.log('expenseId ', expenseId);
-    Logger.log('amount ', amount);
+    // Logger.log('addExpenseToCategory :');
+    // Logger.log('categoryId :', categoryId);
+    // Logger.log('expenseId :', expenseId);
+    // Logger.log('amount :', amount);
+    // Logger.log('date :', date);
+    let updateObject = {
+      $push: { expenses: expenseId },
+    };
+
+    let updated: boolean = false;
+    // Only increment current_value if the year and month are the same
+    if (isInCurrentMonthYear(date)) {
+      updateObject['$inc'] = { current_value: amount };
+      updated = true;
+    }
+
     const category = await this.categoryModel
-      .findByIdAndUpdate(categoryId, {
-        $push: { expenses: expenseId },
-        $inc: { current_value: amount },
-      })
+      .findByIdAndUpdate(categoryId, updateObject)
       .session(session)
       .exec();
+
+    let catgNewVal = amount + category.current_value;
 
     if (!category) {
       throw new NotFoundException(`Category with ID '${categoryId}' not found`);
     }
 
-    this.alertService.updateTriggeredAtDate(
-      categoryId,
-      category.current_value,
-      session,
-    );
+    await this.alertService.reevaluateAlerts(category, catgNewVal, session);
   }
 
   async findAlertsOfCategory(categoryId: string): Promise<Alert[]> {
