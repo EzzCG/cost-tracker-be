@@ -1,3 +1,14 @@
+1.       download vscode (https://code.visualstudio.com/download)
+2.       download noje.js v18.16.0 {node --version) or higher (https://nodejs.org/en/download)
+3.  download git (https://git-scm.com/)
+4.       Create a shared folder with the name Cost-tracker for the Frontend and the Backend of Cost-tracker
+5.  Clone the Frontend repo with the following command in the shared folder Cost-tracker: git clone https://github.com/officialEN10/cost-tracker-fe.git
+6.  Clone the Backend repo with the following command in the shared folder Cost-tracker: git clone https://github.com/EzzCG/cost-tracker-be.git
+7.       Open a terminal while inside each of the FE and BE repo
+8.       In both terminals, run the command: npm install
+9.       To run the FE: npm start
+10. To run the BE: npm run start:dev (You have to run the FrontEnd in a terminal and the Backend in another terminal at the same time)
+
 <p align="center">
   <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="200" alt="Nest Logo" /></a>
 </p>
