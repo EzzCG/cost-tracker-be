@@ -1,33 +1,24 @@
 import {
-  Controller,
-  Get,
-  Post,
   Body,
-  Param,
-  Put,
+  Controller,
   Delete,
-  NotFoundException,
-  UseGuards,
-  Res,
-  BadRequestException,
-  Req,
-  HttpStatus,
+  Get,
   Logger,
-  UnauthorizedException,
+  Param,
+  Post,
+  Put,
+  Request,
+  UseGuards,
 } from '@nestjs/common';
-import { CreateCategoryDto } from './dtos/category.create.dto';
-import { UpdateCategoryDto } from './dtos/category.update.dto';
-import { CategoryService } from './services/category.service';
-import { Category } from './interfaces/category.interface';
-import { Response } from 'express';
 import { JwtAuthGuard } from 'src/shared/guards/jwt-auth.guard';
-import { AuthMiddleware } from '../auth/middleware/auth.middleware';
-import { Request } from '@nestjs/common';
+import { Alert } from '../alert/schemas/alert.schema.';
 import { UserRequest } from '../auth/middleware/user-request.interface';
 import { Expense } from '../expense/schemas/expense.schema';
-import { Alert } from '../alert/schemas/alert.schema.';
-import { ExpenseService } from '../expense/services/expense.service';
+import { CreateCategoryDto } from './dtos/category.create.dto';
+import { UpdateCategoryDto } from './dtos/category.update.dto';
 import { AuthGuard } from './guards/authguard';
+import { Category } from './interfaces/category.interface';
+import { CategoryService } from './services/category.service';
 
 @Controller('category')
 export class CategoryController {
@@ -47,12 +38,6 @@ export class CategoryController {
       },
       req.userId,
     );
-  }
-
-  @UseGuards(JwtAuthGuard)
-  @Get()
-  async findAll(): Promise<Category[]> {
-    return await this.categoryService.findAll();
   }
 
   @UseGuards(JwtAuthGuard, AuthGuard)
@@ -80,6 +65,14 @@ export class CategoryController {
     @Request() req: UserRequest,
   ): Promise<Category> {
     return await this.categoryService.delete(categoryId, req.userId);
+  }
+
+  //extra methods
+
+  @UseGuards(JwtAuthGuard)
+  @Get()
+  async findAll(): Promise<Category[]> {
+    return await this.categoryService.findAll();
   }
 
   @Get(':id/expenses')

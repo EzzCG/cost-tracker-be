@@ -1,30 +1,25 @@
 import {
-  Controller,
-  Get,
-  Post,
   Body,
-  Param,
-  Put,
+  Controller,
   Delete,
-  NotFoundException,
-  UseGuards,
-  Res,
-  BadRequestException,
-  Req,
-  HttpStatus,
-  UnauthorizedException,
-  Request,
+  Get,
   Logger,
+  Param,
+  Post,
+  Put,
+  Request,
+  UnauthorizedException,
+  UseGuards,
 } from '@nestjs/common';
+import { User } from 'src/components/user/interfaces/user.interface';
+import { JwtAuthGuard } from 'src/shared/guards/jwt-auth.guard';
+import { Alert } from '../alert/schemas/alert.schema.';
+import { UserRequest } from '../auth/middleware/user-request.interface';
+import { Category } from '../category/schemas/category.schema';
+import { Expense } from '../expense/schemas/expense.schema';
 import { CreateUserDto } from './dtos/user.create.dto';
 import { UpdateUserDto } from './dtos/user.update.dto';
 import { UserService } from './services/user.service';
-import { User } from 'src/components/user/interfaces/user.interface';
-import { JwtAuthGuard } from 'src/shared/guards/jwt-auth.guard';
-import { Category } from '../category/schemas/category.schema';
-import { UserRequest } from '../auth/middleware/user-request.interface';
-import { Expense } from '../expense/schemas/expense.schema';
-import { Alert } from '../alert/schemas/alert.schema.';
 
 @Controller('user')
 export class UserController {
@@ -43,22 +38,6 @@ export class UserController {
   @Get('all')
   async findAll(): Promise<User[]> {
     return await this.userService.findAll();
-  }
-
-  @Get('by-id/:id')
-  async findOne(@Param('id') id: string): Promise<User> {
-    return this.userService.findOne(id);
-  }
-  //a method that returns the user based on the login token
-  @Get()
-  async findUser(@Request() req: UserRequest): Promise<User> {
-    Logger.log('findUser-> req.userId: ', req.userId);
-    return await this.userService.findUser(req.userId);
-  }
-
-  @Get('by-email/:email')
-  async findByEmail(@Param('email') email: string): Promise<User> {
-    return await this.userService.findByEmail(email);
   }
 
   @Put(':id')
@@ -114,5 +93,21 @@ export class UserController {
       );
     }
     return await this.userService.findAlertsOfUser(userId);
+  }
+  //extra methods
+  @Get('by-id/:id')
+  async findOne(@Param('id') id: string): Promise<User> {
+    return this.userService.findOne(id);
+  }
+  //a method that returns the user based on the login token
+  @Get()
+  async findUser(@Request() req: UserRequest): Promise<User> {
+    Logger.log('findUser-> req.userId: ', req.userId);
+    return await this.userService.findUser(req.userId);
+  }
+
+  @Get('by-email/:email')
+  async findByEmail(@Param('email') email: string): Promise<User> {
+    return await this.userService.findByEmail(email);
   }
 }

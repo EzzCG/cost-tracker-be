@@ -1,13 +1,13 @@
 import { Module, forwardRef } from '@nestjs/common';
-import { ExpenseSchema } from './schemas/expense.schema';
 import { MongooseModule } from '@nestjs/mongoose';
-import { UserModule } from '../user/user.module';
-import { ExpenseController } from './expense.controller';
-import { ExpenseService } from './services/expense.service';
-import { CategoryModule } from '../category/category.module';
-import { AttachmentModule } from '../attachment/attachment.module';
 import { MulterModule } from '@nestjs/platform-express';
 import * as multer from 'multer';
+import { AttachmentModule } from '../attachment/attachment.module';
+import { CategoryModule } from '../category/category.module';
+import { UserModule } from '../user/user.module';
+import { ExpenseController } from './expense.controller';
+import { ExpenseSchema } from './schemas/expense.schema';
+import { ExpenseService } from './services/expense.service';
 @Module({
   imports: [
     MongooseModule.forFeature([{ name: 'Expense', schema: ExpenseSchema }]),

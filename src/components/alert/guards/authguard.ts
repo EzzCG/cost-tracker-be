@@ -1,9 +1,8 @@
 import {
-  Injectable,
   CanActivate,
   ExecutionContext,
-  Logger,
   ForbiddenException,
+  Injectable,
 } from '@nestjs/common';
 import { UserRequest } from '../../auth/middleware/user-request.interface';
 import { AlertService } from '../services/alert.service';

@@ -5,30 +5,23 @@ import {
   InternalServerErrorException,
   Logger,
   NotFoundException,
-  Req,
-  UseGuards,
   forwardRef,
 } from '@nestjs/common';
-import * as cron from 'node-cron';
-import { CategoryRepository } from './category.repository';
-import { UpdateCategoryDto } from '../dtos/category.update.dto';
-import { CreateCategoryDto } from '../dtos/category.create.dto';
-import { Category } from '../schemas/category.schema';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import * as bcrypt from 'bcrypt';
-import { Expense } from 'src/components/expense/schemas/expense.schema';
+import * as cron from 'node-cron';
 import { Alert } from 'src/components/alert/schemas/alert.schema.';
+import { AlertService } from 'src/components/alert/services/alert.service';
+import { Expense } from 'src/components/expense/schemas/expense.schema';
 import { ExpenseService } from 'src/components/expense/services/expense.service';
 import {
   UserRepository,
   UserRepositoryToken,
 } from 'src/components/user/repos/user.repository';
-import { create } from 'domain';
-import { async } from 'rxjs';
-import { AuthGuard } from '@nestjs/passport';
-import { AlertService } from 'src/components/alert/services/alert.service';
 import { isInCurrentMonthYear } from 'src/shared/helper-functions';
+import { UpdateCategoryDto } from '../dtos/category.update.dto';
+import { Category } from '../schemas/category.schema';
+import { CategoryRepository } from './category.repository';
 
 @Injectable()
 export class MongooseCategoryRepository implements CategoryRepository {

@@ -1,13 +1,13 @@
 import { Module, forwardRef } from '@nestjs/common';
-import { CategoryController } from './category.controller';
 import { MongooseModule } from '@nestjs/mongoose';
-import { CategoryRepositoryToken } from './repos/category.repository';
+import { AlertModule } from '../alert/alert.module';
+import { ExpenseModule } from '../expense/expense.module';
+import { UserModule } from '../user/user.module';
+import { CategoryController } from './category.controller';
 import { MongooseCategoryRepository } from './repos/category.mongoose-repository';
+import { CategoryRepositoryToken } from './repos/category.repository';
 import { CategorySchema } from './schemas/category.schema';
 import { CategoryService } from './services/category.service';
-import { UserModule } from '../user/user.module';
-import { ExpenseModule } from '../expense/expense.module';
-import { AlertModule } from '../alert/alert.module';
 
 @Module({
   imports: [

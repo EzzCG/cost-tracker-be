@@ -1,8 +1,8 @@
 // user.helpers.ts
 
-import { Model, Types } from 'mongoose';
-import { NotFoundException, ConflictException } from '@nestjs/common';
+import { ConflictException, NotFoundException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
+import { Model, Types } from 'mongoose';
 import { User } from '../schemas/user.schema';
 
 //checks if id type is correct(length check)

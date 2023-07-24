@@ -1,10 +1,10 @@
 import { Module, forwardRef } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
-import { UserModule } from '../user/user.module';
-import { AlertSchema } from './schemas/alert.schema.';
-import { AlertController } from './alert.controller';
-import { AlertService } from './services/alert.service';
 import { CategoryModule } from '../category/category.module';
+import { UserModule } from '../user/user.module';
+import { AlertController } from './alert.controller';
+import { AlertSchema } from './schemas/alert.schema.';
+import { AlertService } from './services/alert.service';
 
 @Module({
   imports: [

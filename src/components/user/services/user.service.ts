@@ -1,11 +1,10 @@
-import { Inject, Injectable, Logger } from '@nestjs/common';
-import { UpdateUserDto } from '../dtos/user.update.dto';
-import { UserRepositoryToken, UserRepository } from '../repos/user.repository';
-import { User } from 'src/components/user/interfaces/user.interface';
-import { Types } from 'mongoose';
+import { Inject, Injectable } from '@nestjs/common';
+import { Alert } from 'src/components/alert/schemas/alert.schema.';
 import { Category } from 'src/components/category/schemas/category.schema';
 import { Expense } from 'src/components/expense/schemas/expense.schema';
-import { Alert } from 'src/components/alert/schemas/alert.schema.';
+import { User } from 'src/components/user/interfaces/user.interface';
+import { UpdateUserDto } from '../dtos/user.update.dto';
+import { UserRepository, UserRepositoryToken } from '../repos/user.repository';
 
 @Injectable()
 export class UserService {
@@ -22,16 +21,8 @@ export class UserService {
     return await this.userRepository.findAll();
   }
 
-  async findOne(id: string): Promise<User> {
-    return await this.userRepository.findOne(id);
-  }
-
   async findUser(id: string): Promise<User> {
     return await this.userRepository.findOne(id);
-  }
-
-  async findByEmail(email: string): Promise<User> {
-    return await this.userRepository.findByEmail(email);
   }
 
   async update(id: string, user: UpdateUserDto): Promise<User> {
@@ -55,5 +46,12 @@ export class UserService {
   //fetch alerts of  a user
   async findAlertsOfUser(userId: string): Promise<Alert[]> {
     return await this.userRepository.findAlertsOfUser(userId);
+  }
+  //extra methods
+  async findOne(id: string): Promise<User> {
+    return await this.userRepository.findOne(id);
+  }
+  async findByEmail(email: string): Promise<User> {
+    return await this.userRepository.findByEmail(email);
   }
 }

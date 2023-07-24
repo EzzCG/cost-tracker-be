@@ -1,38 +1,33 @@
 import {
-  ConflictException,
   Inject,
   Injectable,
   InternalServerErrorException,
-  Logger,
   NotFoundException,
   forwardRef,
 } from '@nestjs/common';
 import {
-  checkIdType,
   checkEmailExists,
-  checkUserFound,
   checkEmailFound,
+  checkIdType,
+  checkUserFound,
   hashPw,
 } from './user.error-checks';
 
-import { UserRepository } from './user.repository';
-import { UpdateUserDto } from '../dtos/user.update.dto';
-import { User } from '../schemas/user.schema';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types, startSession } from 'mongoose';
-import { CreateUserDto } from '../dtos/user.create.dto';
-import * as bcrypt from 'bcrypt';
-import { Category } from 'src/components/category/schemas/category.schema';
-import { Expense } from 'src/components/expense/schemas/expense.schema';
+import { Model, Types } from 'mongoose';
 import { Alert } from 'src/components/alert/schemas/alert.schema.';
-import { CategoryService } from 'src/components/category/services/category.service';
-import { MongooseCategoryRepository } from 'src/components/category/repos/category.mongoose-repository';
+import { AlertService } from 'src/components/alert/services/alert.service';
 import {
   CategoryRepository,
   CategoryRepositoryToken,
 } from 'src/components/category/repos/category.repository';
-import { AlertService } from 'src/components/alert/services/alert.service';
+import { Category } from 'src/components/category/schemas/category.schema';
+import { Expense } from 'src/components/expense/schemas/expense.schema';
 import { ExpenseService } from 'src/components/expense/services/expense.service';
+import { CreateUserDto } from '../dtos/user.create.dto';
+import { UpdateUserDto } from '../dtos/user.update.dto';
+import { User } from '../schemas/user.schema';
+import { UserRepository } from './user.repository';
 @Injectable()
 export class MongooseUserRepository implements UserRepository {
   constructor(

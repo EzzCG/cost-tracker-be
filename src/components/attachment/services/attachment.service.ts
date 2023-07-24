@@ -1,27 +1,19 @@
 import {
-  Injectable,
+  ConflictException,
   Inject,
+  Injectable,
+  InternalServerErrorException,
   NotFoundException,
   forwardRef,
-  InternalServerErrorException,
-  ConflictException,
 } from '@nestjs/common';
 
-import { Model, Types } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
-import {
-  UserRepository,
-  UserRepositoryToken,
-} from 'src/components/user/repos/user.repository';
-import {
-  CategoryRepository,
-  CategoryRepositoryToken,
-} from 'src/components/category/repos/category.repository';
-import { Attachment } from '../schemas/attachment.schema';
-import { CreateAttachmentDto } from '../dtos/attachment.create.dto';
-import { ExpenseService } from 'src/components/expense/services/expense.service';
-import { UpdateAttachmentDto } from '../dtos/attachment.update.dto';
 import { unlinkSync } from 'fs';
+import { Model } from 'mongoose';
+import { ExpenseService } from 'src/components/expense/services/expense.service';
+import { CreateAttachmentDto } from '../dtos/attachment.create.dto';
+import { UpdateAttachmentDto } from '../dtos/attachment.update.dto';
+import { Attachment } from '../schemas/attachment.schema';
 
 @Injectable()
 export class AttachmentService {

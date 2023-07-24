@@ -9,20 +9,20 @@ import {
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { Expense } from 'src/components/expense/schemas/expense.schema';
-import { Alert } from '../schemas/alert.schema.';
+import * as cron from 'node-cron';
 import {
-  CategoryRepositoryToken,
   CategoryRepository,
+  CategoryRepositoryToken,
 } from 'src/components/category/repos/category.repository';
-import { CreateAlertDto } from '../dtos/alert.create.dto';
+import { Category } from 'src/components/category/schemas/category.schema';
+import { Expense } from 'src/components/expense/schemas/expense.schema';
 import {
   UserRepository,
   UserRepositoryToken,
 } from 'src/components/user/repos/user.repository';
+import { CreateAlertDto } from '../dtos/alert.create.dto';
 import { UpdateAlertDto } from '../dtos/alert.update.dto';
-import * as cron from 'node-cron';
-import { Category } from 'src/components/category/schemas/category.schema';
+import { Alert } from '../schemas/alert.schema.';
 
 @Injectable()
 export class AlertService {
@@ -171,7 +171,7 @@ export class AlertService {
         $addFields: {
           status: {
             $cond: [
-              { $eq: [{ $size: "$wasTriggeredInMonth" }, 0] }, //if size equals to 0, it's active, otherwise it's triggered
+              { $eq: [{ $size: '$wasTriggeredInMonth' }, 0] }, //if size equals to 0, it's active, otherwise it's triggered
               'Active',
               'Triggered',
             ],
@@ -203,14 +203,17 @@ export class AlertService {
             ],
           },
         },
-        
       },
     ]);
 
     return alerts;
   }
 
-  async update(id: string, alertDto: UpdateAlertDto, userId: string): Promise<Alert> {
+  async update(
+    id: string,
+    alertDto: UpdateAlertDto,
+    userId: string,
+  ): Promise<Alert> {
     const session = await this.alertModel.db.startSession(); //we start a session here of dif queries
     session.startTransaction(); //incase of an error, all queries, won't take effect
 

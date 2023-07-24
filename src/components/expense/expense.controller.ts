@@ -1,28 +1,27 @@
 import {
-  Controller,
-  Get,
-  Post,
   Body,
-  Param,
-  Put,
+  Controller,
   Delete,
-  UseGuards,
+  Get,
+  Param,
+  Post,
+  Put,
   Request,
   UploadedFile,
+  UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import * as fs from 'fs';
+import { isValidObjectId } from 'mongoose';
+import * as path from 'path';
+import { JwtAuthGuard } from 'src/shared/guards/jwt-auth.guard';
+import { AttachmentService } from '../attachment/services/attachment.service';
+import { UserRequest } from '../auth/middleware/user-request.interface';
 import { CreateExpenseDto } from './dtos/expense.create.dto';
 import { UpdateExpenseDto } from './dtos/expense.update.dto';
 import { Expense } from './schemas/expense.schema';
 import { ExpenseService } from './services/expense.service';
-import { UserRequest } from '../auth/middleware/user-request.interface';
-import { JwtAuthGuard } from 'src/shared/guards/jwt-auth.guard';
-import { Attachment } from '../attachment/schemas/attachment.schema';
-import { FileInterceptor } from '@nestjs/platform-express';
-import * as path from 'path';
-import * as fs from 'fs';
-import { isValidObjectId } from 'mongoose';
-import { AttachmentService } from '../attachment/services/attachment.service';
 @Controller('expense')
 export class ExpenseController {
   constructor(
@@ -144,12 +143,6 @@ export class ExpenseController {
     );
   }
 
-  @UseGuards(JwtAuthGuard)
-  @Get()
-  async findAll(): Promise<Expense[]> {
-    return await this.expenseService.findAll();
-  }
-
   @Get(':id')
   async findOne(@Param('id') id: string): Promise<Expense> {
     return await this.expenseService.findOne(id);
@@ -158,5 +151,12 @@ export class ExpenseController {
   @Delete(':id')
   async delete(@Param('id') id: string): Promise<Expense> {
     return await this.expenseService.delete(id);
+  }
+
+  //extra
+  @UseGuards(JwtAuthGuard)
+  @Get()
+  async findAll(): Promise<Expense[]> {
+    return await this.expenseService.findAll();
   }
 }

@@ -1,15 +1,13 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { UpdateCategoryDto } from '../dtos/category.update.dto';
-import {
-  CategoryRepositoryToken,
-  CategoryRepository,
-} from '../repos/category.repository';
-import { Category } from '../interfaces/category.interface';
-import { User } from 'src/components/user/interfaces/user.interface';
-import { UserService } from 'src/components/user/services/user.service';
-import { Types } from 'mongoose';
-import { Expense } from 'src/components/expense/schemas/expense.schema';
 import { Alert } from 'src/components/alert/schemas/alert.schema.';
+import { Expense } from 'src/components/expense/schemas/expense.schema';
+import { UserService } from 'src/components/user/services/user.service';
+import { UpdateCategoryDto } from '../dtos/category.update.dto';
+import { Category } from '../interfaces/category.interface';
+import {
+  CategoryRepository,
+  CategoryRepositoryToken,
+} from '../repos/category.repository';
 @Injectable()
 export class CategoryService {
   constructor(
